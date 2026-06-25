@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual Guide: AI Heatmap Focus on Lumen</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8fafc;
+            color: #0f172a;
+            font-family: 'Prompt', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 3rem 1rem;
+            text-align: center;
+        }
+        h1 { color: #0284c7; margin-bottom: 0.5rem; }
+        p.subtitle { color: #475569; max-width: 600px; line-height: 1.6; margin-bottom: 3rem; }
+        
+        .grid {
+            display: flex;
+            gap: 3rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .card {
+            background: #ffffff;
+            padding: 2rem;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            width: 280px;
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .card h2 { margin-bottom: 0.5rem; font-size: 1.2rem; color: #0f172a; }
+        .card p { font-size: 0.9rem; color: #475569; margin-bottom: 2rem; line-height: 1.5;}
+
+        /* The Airway Simulation */
+        .airway-container {
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, #db2777 0%, #831843 100%); /* สีเนื้อเยื่อ */
+            border-radius: 50%;
+            margin: 0 auto;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            border: 4px solid #000;
+        }
+
+        /* The Dark Hole (Lumen) */
+        .lumen {
+            background: #000;
+            position: relative;
+            z-index: 2;
+            transition: all 2s ease-in-out;
+            animation: breathe 4s infinite alternate;
+        }
+
+        /* Heatmap Glow (Red) */
+        .heatmap-glow {
+            position: absolute;
+            background: radial-gradient(circle, rgba(255,0,0,0.9) 0%, rgba(255,255,0,0.6) 40%, rgba(0,255,0,0.3) 70%, transparent 100%);
+            z-index: 3;
+            mix-blend-mode: screen;
+            opacity: 0.8;
+            pointer-events: none;
+            transition: all 2s ease-in-out;
+            animation: pulse-glow 2s infinite alternate;
+        }
+
+        /* 1. AP Collapse (รูเป็นขีดแนวนอน) */
+        .card-ap .lumen {
+            width: 160px; height: 30px; border-radius: 50px;
+        }
+        .card-ap .heatmap-glow {
+            width: 180px; height: 70px;
+        }
+
+        /* 2. Lateral Collapse (รูเป็นขีดแนวตั้ง) */
+        .card-lat .lumen {
+            width: 30px; height: 160px; border-radius: 50px;
+        }
+        .card-lat .heatmap-glow {
+            width: 70px; height: 180px;
+        }
+
+        /* 3. Concentric Collapse (รูเป็นจุดเล็กๆ ตรงกลาง) */
+        .card-con .lumen {
+            width: 25px; height: 25px; border-radius: 50%;
+        }
+        .card-con .heatmap-glow {
+            width: 100px; height: 100px; border-radius: 50%;
+        }
+
+        @keyframes breathe {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.1); }
+        }
+        @keyframes pulse-glow {
+            0% { opacity: 0.6; transform: scale(0.9); }
+            100% { opacity: 1; transform: scale(1.1); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <div style="width: 100%; max-width: 1100px; display: flex; justify-content: flex-start; gap: 1rem; margin-bottom: 2rem;">
+        <a href="index.html" style="background: transparent; color: #0284c7; border: 1px solid #0284c7; padding: 0.5rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 0.5rem;">
+            &larr; กลับหน้าวินิจฉัยหลัก
+        </a>
+        <a href="validation.html" style="background: transparent; color: #0f766e; border: 1px solid #0f766e; padding: 0.5rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 0.5rem;">
+            Validation & Metrics &rarr;
+        </a>
+    </div>
+
+    <h1>การวิเคราะห์ขอบเขตช่องทางเดินหายใจ (Lumen Geometry Focus)</h1>
+    <p class="subtitle">
+        ภาพจำลองแสดงให้เห็นว่า ระบบไม่ได้ประเมินจากกล้ามเนื้อรอบนอก แต่จะโฟกัสไปที่ <b>"ลักษณะรูปทรงของช่องว่าง (Airway Lumen)"</b> ที่หลงเหลืออยู่ 
+        เนื่องจากรูปแบบและมิติความกว้างของช่องลมนี้ เป็นปัจจัยหลักที่ช่วยระบุลักษณะการยุบตัวได้อย่างถูกต้องที่สุด
+    </p>
+
+    <div class="grid">
+        
+        <!-- AP -->
+        <div class="card card-ap">
+            <h2>AP Collapse</h2>
+            <p>เนื้อเยื่อบีบจาก บน-ล่าง<br>ช่องลมที่เหลือจะมีลักษณะเป็น <b>"ขีดแนวนอน"</b></p>
+            <div class="airway-container">
+                <div class="lumen"></div>
+                <div class="heatmap-glow"></div>
+            </div>
+        </div>
+
+        <!-- Lateral -->
+        <div class="card card-lat">
+            <h2>Lateral Collapse</h2>
+            <p>เนื้อเยื่อบีบจาก ซ้าย-ขวา<br>ช่องลมที่เหลือจะมีลักษณะเป็น <b>"ขีดแนวตั้ง"</b></p>
+            <div class="airway-container">
+                <div class="lumen"></div>
+                <div class="heatmap-glow"></div>
+            </div>
+        </div>
+
+        <!-- Concentric -->
+        <div class="card card-con">
+            <h2>Concentric Collapse</h2>
+            <p>เนื้อเยื่อบีบจาก ทุกทิศทาง<br>ช่องลมที่เหลือจะมีลักษณะเป็น <b>"จุดกลมเล็กๆ ตรงกลาง"</b></p>
+            <div class="airway-container">
+                <div class="lumen"></div>
+                <div class="heatmap-glow"></div>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

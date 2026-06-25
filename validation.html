@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validation & Metrics - DISE Sense</title>
+    <!-- Import Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@300;400;600;700&family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=20260607">
+    <style>
+        body {
+            font-family: 'Prompt', 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .main-content {
+            margin-top: 3rem;
+            margin-bottom: 5rem;
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+        .metric-card {
+            background: #ffffff;
+            border: 1px solid var(--card-border);
+            padding: 2rem 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .metric-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+        }
+        .metric-title {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 0.6rem;
+        }
+        .metric-value {
+            font-size: 3rem;
+            font-weight: 800;
+            line-height: 1.1;
+        }
+        .metric-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.6rem;
+        }
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+        }
+        @media (max-width: 480px) {
+            .details-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Navbar -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="logo">
+                <div class="logo-icon">DISE</div>
+                <div class="logo-text">DISE<span>Sense</span></div>
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html#services-anchor">Diagnostic Features</a></li>
+                <li><a href="visual_guide.html">Clinical Guide</a></li>
+                <li><a href="validation.html" class="active" style="color: var(--primary); font-weight: bold;">Validation & Metrics</a></li>
+            </ul>
+            <div class="nav-actions">
+                <div class="status-badge">
+                    <div class="pulse"></div> Engine Online
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container main-content">
+        <!-- Back Button -->
+        <div style="margin-bottom: 2rem;">
+            <a href="index.html" style="text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; color: var(--primary); font-weight: 600; transition: color 0.2s;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                กลับสู่หน้าวิเคราะห์หลัก
+            </a>
+        </div>
+
+        <!-- Section Header -->
+        <div style="margin-bottom: 2.5rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 1.5rem;">
+            <h1 style="font-size: 2rem; color: var(--text-dark); font-weight: 800; font-family: 'Outfit', sans-serif;">
+                Clinical Verification & System Accuracy
+            </h1>
+            <p style="font-size: 0.95rem; line-height: 1.7; color: var(--text-muted); margin-top: 0.6rem; max-width: 800px;">
+                เพื่อพิสูจน์ความแม่นยำและความเที่ยงตรงเชิงวิทยาศาสตร์ (Scientific Accuracy) ของระบบสแกนรูปทรงอัตโนมัติ (Automated Geometric Mode) ระบบได้นำชุดวิดีโอตรวจจริงของแพทย์คนไข้ DISE ทั้งหมด 30 ราย (Clips 1-30) มาประเมินความสอดคล้องเปรียบเทียบกับผลชี้ขาดเฉลยของแพทย์ผู้เชี่ยวชาญ (Otolaryngologist Gold Standard) โดยมีผลการสอบทานดังนี้:
+            </p>
+        </div>
+
+        <!-- Metrics Cards Grid -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-title" style="color: var(--primary);">Screening Accuracy</div>
+                <div class="metric-value" style="color: var(--primary);">93.3%</div>
+                <div class="metric-desc">ความถูกต้องในการคัดแยกช่องลมที่มีพยาธิสภาพ</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title" style="color: #0f766e;">Sensitivity (TPR)</div>
+                <div class="metric-value" style="color: #0f766e;">96.4%</div>
+                <div class="metric-desc">ความไวระบบในการตรวจคนไข้ที่มีความผิดปกติ</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title" style="color: var(--accent);">Specificity (TNR)</div>
+                <div class="metric-value" style="color: var(--accent);">50.0%</div>
+                <div class="metric-desc">ความแม่นยำจำเพาะในการบ่งชี้คนไข้ปกติจริง</div>
+            </div>
+        </div>
+
+        <!-- Details Grid -->
+        <div class="details-grid">
+            <!-- Confusion Matrix Card -->
+            <div class="detail-card" style="background: #ffffff; padding: 1.8rem; border-radius: 12px; border: 1px solid var(--card-border);">
+                <h3 style="font-size: 1.2rem; color: var(--text-dark); margin-bottom: 1rem; font-family: 'Outfit', sans-serif;">Confusion Matrix Table</h3>
+                <table class="print-table" style="width: 100%; border-collapse: collapse; font-size: 0.9rem; border-radius: 8px; overflow: hidden; border: 1px solid #cbd5e1;">
+                    <thead>
+                        <tr style="background: #e2e8f0;">
+                            <th style="border: 1px solid #cbd5e1; padding: 12px; text-align: left; font-weight: bold; color: var(--text-dark);">Actual Physicians (N=30)</th>
+                            <th style="border: 1px solid #cbd5e1; padding: 12px; text-align: center; font-weight: bold; color: var(--text-dark);">แพทย์ยืนยัน: ปกติ</th>
+                            <th style="border: 1px solid #cbd5e1; padding: 12px; text-align: center; font-weight: bold; color: var(--text-dark);">แพทย์ยืนยัน: ตีบแคบ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="border: 1px solid #cbd5e1; padding: 12px; font-weight: bold; background: var(--bg-light);">ระบบสแกน: ปกติ</td>
+                            <td style="border: 1px solid #cbd5e1; padding: 12px; text-align: center; background: #e6fcf5; font-weight: bold; color: #0d9488;">1 <br><span style="font-size: 0.7rem; font-weight: normal; color: var(--text-muted);">True Negative</span></td>
+                            <td style="border: 1px solid #cbd5e1; padding: 12px; text-align: center; color: var(--text-muted);">1 <br><span style="font-size: 0.7rem;">False Negative</span></td>
+                        </tr>
+                        <tr>
+                            <td style="border: 1px solid #cbd5e1; padding: 12px; font-weight: bold; background: var(--bg-light);">ระบบสแกน: ตีบแคบ</td>
+                            <td style="border: 1px solid #cbd5e1; padding: 12px; text-align: center; color: var(--text-muted);">1 <br><span style="font-size: 0.7rem;">False Positive</span></td>
+                            <td style="border: 1px solid #cbd5e1; padding: 12px; text-align: center; background: #e6fcf5; font-weight: bold; color: #0d9488;">27 <br><span style="font-size: 0.7rem; font-weight: normal; color: var(--text-muted);">True Positive</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- VOTE Diagnostic Consistency Card -->
+            <div class="detail-card" style="background: #ffffff; padding: 1.8rem; border-radius: 12px; border: 1px solid var(--card-border); display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <h3 style="font-size: 1.2rem; color: var(--text-dark); margin-bottom: 1.2rem; font-family: 'Outfit', sans-serif;">VOTE Diagnostic Concordance</h3>
+                    <div style="display: flex; flex-direction: column; gap: 1rem; font-size: 0.95rem;">
+                        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 0.8rem;">
+                            <span style="color: var(--text-muted);">VOTE Severity Degree Accuracy:</span>
+                            <strong style="color: var(--primary); font-size: 1.1rem;">56.7%</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 0.8rem;">
+                            <span style="color: var(--text-muted);">VOTE Collapse Shape Concordance:</span>
+                            <strong style="color: var(--primary); font-size: 1.1rem;">83.3%</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 0.8rem;">
+                            <span style="color: var(--text-muted);">Overall AI Diagnostic Accuracy (VOTE):</span>
+                            <strong style="color: var(--primary); font-size: 1.1rem;">53.3% (16/30)</strong>
+                        </div>
+                    </div>
+                </div>
+                <p style="font-size: 0.78rem; line-height: 1.6; color: var(--text-muted); margin-top: 1.5rem; border-top: 1px dashed #cbd5e1; padding-top: 1rem; margin-bottom: 0;">
+                    💡 *หมายเหตุ:* ผลความสอดคล้องข้างต้นได้มาจากการวิเคราะห์โดยระบบสแกนเรขาคณิตอัตโนมัติของ AI สแกนสดแบบอิสระเต็มรูปแบบ (Automated Geometric Scan) โดยไม่พึ่งพาฐานข้อมูลปรับเทียบ
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Section -->
+    <footer class="footer">
+        <div class="container">
+            <div>
+                <p style="font-weight: bold; color: white; margin-bottom: 0.3rem; font-size: 1.1rem; font-family: 'Outfit', sans-serif;">DISE Sense Portal</p>
+                <p style="font-size: 0.8rem; color: #64748b;">Clinical 3D Airway Geometric Analytics Platform</p>
+            </div>
+            <div>
+                <p style="font-size: 0.8rem;">&copy; 2026. All rights reserved. Supported by Medical Imaging Research Group.</p>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>

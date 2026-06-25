@@ -1,0 +1,25 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# OS generated files
+desktop.ini
+.DS_Store
+
+# Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Large datasets & videos (Recommended to exclude from Git repository)
+video DISE patient 001-100/
+temp_*.mp4
+*.pth
+
+# Artifacts and logs
+scratch/
+evaluate_results.txt
+kernel_sweep_results.txt
+*.log

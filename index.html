@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DISE Sense - 3D Airway Geometric & Reconstruction Portal</title>
+    <!-- Import Google Fonts: Outfit (Brand & Headers) and Inter (Body) -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@300;400;600;700&family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=20260607">
+    <!-- Import Three.js and OrbitControls for 3D Rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+
+    <!-- Header Navbar -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="#" class="logo">
+                <div class="logo-icon">DISE</div>
+                <div class="logo-text">DISE<span>Sense</span></div>
+            </a>
+            <ul class="nav-links">
+                <li><a href="#services-anchor">Diagnostic Features</a></li>
+                <li><a href="visual_guide.html">Clinical Guide</a></li>
+                <li><a href="validation.html">Validation & Metrics</a></li>
+            </ul>
+            <div class="nav-actions">
+                <div class="status-badge">
+                    <div class="pulse"></div> Engine Online
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section with Integrated Upload Calculator -->
+    <header class="hero-section">
+        <div class="container hero-grid">
+            <div class="hero-content">
+                <h2>Automated 3D Airway Analytics & <span>DISE Simulation</span></h2>
+                <p class="subtitle">
+                    A state-of-the-art diagnostic decision-support system translating qualitative Drug-Induced Sleep Endoscopy (DISE) videos into objective mathematical insights.
+                </p>
+                <ul class="hero-features" style="list-style: none; padding: 0;">
+                    <li>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        Automated Lumen Edge Segmentation (Active Contours)
+                    </li>
+                    <li>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        Interactive 3D Airway Mesh Generation & Vector Fields
+                    </li>
+                    <li>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        Clinical VOTE Classification & Severity Alignment
+                    </li>
+                    <li>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        Printable A4 Diagnostic PDF Reports
+                    </li>
+                </ul>
+                <div style="margin-top: 1rem;">
+                    <a href="#services-anchor" class="btn-outline" style="text-decoration: none;">Explore Technical Pipeline</a>
+                </div>
+            </div>
+
+            <!-- Upload portal styled as Quote Calculator Card -->
+            <div class="calculator-card" id="upload-section">
+                <h3>Video Analysis Portal</h3>
+                <p class="card-subtitle">Upload a DISE video clip (.mp4) to initiate automated 3D geometric reconstruction and diagnostics.</p>
+                
+                <div class="form-group">
+                    <label>DISE Video Source File</label>
+                    <div class="upload-area" id="drop-zone">
+                        <div class="upload-icon">
+                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                        </div>
+                        <h4>Drag and drop DISE video clip here</h4>
+                        <p>or <span>browse local directory</span></p>
+                        <input type="file" id="file-input" accept="video/mp4" hidden>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- App Content Wrapper for dynamically shown states -->
+    <main class="container" style="margin-top: 2.5rem; margin-bottom: 2.5rem;">
+        
+        <!-- Processing State Card -->
+        <section class="processing-card" id="processing-section">
+            <h2 style="text-align: center; margin-bottom: 0.5rem;">Processing DISE Video Scan...</h2>
+            <p style="text-align: center; color: var(--text-muted);">Executing morphological contour segmentation, signal smoothing, and 3D mesh calibration.</p>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+
+            <ul class="processing-steps">
+                <li class="step active" id="step-1">Decompressing video stream and extracting keyframes...</li>
+                <li class="step" id="step-2">Scanning dynamic region of interest (ROI) and removing noise artifacts...</li>
+                <li class="step" id="step-3">Performing contour tracking, aspect ratio, and angle calculation...</li>
+                <li class="step" id="step-4">Compiling 3D mesh segments, generating heatmaps and diagnostic vectors...</li>
+            </ul>
+        </section>
+
+        <!-- Result Dashboard Card -->
+        <section class="result-dashboard" id="result-section">
+            <div class="result-header">
+                <h2>Clinical Airway Analysis & Visualizations</h2>
+                <div style="display: flex; gap: 0.8rem;">
+                    <button class="btn-outline" style="border-color: #0d9488; color: #0d9488;" onclick="printReport()">Print Report</button>
+                    <button class="btn-primary" onclick="resetApp()">New Analysis</button>
+                </div>
+            </div>
+
+            <!-- Tab Navigation Bar -->
+            <div class="clinical-tabs" id="clinical-tabs">
+                <button class="tab-btn active" onclick="switchTab('tab-overview')">2D/3D Comparative View</button>
+                <button class="tab-btn" onclick="switchTab('tab-geometry')">Lumen Geometry (Before/After)</button>
+                <button class="tab-btn" onclick="switchTab('tab-report')">Geometry Analytics Report</button>
+            </div>
+            
+            <!-- Tab Contents -->
+            <div class="tab-contents-container">
+                
+                <!-- Tab 1: Primary Overview (Comparative 2D/3D View) -->
+                <div class="tab-content active" id="tab-overview">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                        <!-- Left: 2D Endoscopy View -->
+                        <div class="detail-card" style="background: #ffffff; display: flex; flex-direction: column;">
+                            <h3>2D Endoscopy View</h3>
+                            <div class="img-wrapper animated-wrapper" style="position: relative; border-radius: 8px; overflow: hidden; background: #000; display: flex; justify-content: center; align-items: center; height: 320px;">
+                                <img src="" id="gif-animation" alt="Collapse Sequence" style="height: 100%; width: auto; object-fit: contain;">
+                                <div class="img-badge play-badge" style="position: absolute; bottom: 10px; left: 10px; background: rgba(13, 148, 136, 0.95); color: white; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.75rem; font-weight: bold; z-index: 10;">AI 2D Contour Overlay</div>
+                            </div>
+                            <div style="display: flex; gap: 0.8rem; justify-content: center; margin-top: 1rem; font-size: 0.72rem; flex-wrap: wrap;">
+                                <span style="display: flex; align-items: center; gap: 4px; background: #f0fdfa; color: #0f766e; padding: 3px 8px; border-radius: 6px; font-weight: 600; border: 1px solid #ccfbf1;">🟢 Airway Contour</span>
+                                <span style="display: flex; align-items: center; gap: 4px; background: #fef9c3; color: #854d0e; padding: 3px 8px; border-radius: 6px; font-weight: 600; border: 1px solid #fef08a;">🟡 Fitted Ellipse</span>
+                                <span style="display: flex; align-items: center; gap: 4px; background: #fef2f2; color: #991b1b; padding: 3px 8px; border-radius: 6px; font-weight: 600; border: 1px solid #fca5a5;">🔴 Centroid</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Right: 3D Airway View -->
+                        <div class="detail-card" style="background: #ffffff; display: flex; flex-direction: column;">
+                            <h3>Dynamic 3D Airway Model</h3>
+                            <div class="canvas-3d-wrapper">
+                                <div id="canvas-3d"></div>
+                                <div id="three-slice-info">Active Frame: -</div>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem 0.8rem; margin-top: 1rem; font-size: 0.72rem;">
+                                <div style="display: flex; align-items: center; gap: 6px; background: #f8fafc; padding: 3px 6px; border-radius: 4px; border: 1px solid #e2e8f0; font-weight: 500;">
+                                    <span style="display: inline-block; width: 10px; height: 10px; border: 1px solid #94a3b8; background: #f1f5f9; border-radius: 2px;"></span>
+                                    <span>Max-Open Reference Envelope</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 6px; background: #f0fdfa; padding: 3px 6px; border-radius: 4px; border: 1px solid #ccfbf1; font-weight: 500;">
+                                    <span style="display: inline-block; width: 10px; height: 10px; background: linear-gradient(135deg, #14b8a6, #ef4444); border-radius: 2px;"></span>
+                                    <span>Collapse Level Heatmap</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 6px; background: #ecfeff; padding: 3px 6px; border-radius: 4px; border: 1px solid #a5f3fc; font-weight: 500;">
+                                    <span style="display: inline-block; width: 10px; height: 10px; background: #00f5ff; border-radius: 2px; border: 1px solid #00c2cc;"></span>
+                                    <span>Current Active Plane (Cyan Ring)</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 6px; background: #fef2f2; padding: 3px 6px; border-radius: 4px; border: 1px solid #fca5a5; font-weight: 500;">
+                                    <span style="display: inline-block; width: 10px; height: 10px; background: #ef4444; border-radius: 2px;"></span>
+                                    <span>Collapse Vector Fields</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Playback Controls -->
+                    <div class="playback-controls">
+                        <button id="btn-play-pause">Pause</button>
+                        <div style="flex: 1; display: flex; align-items: center; gap: 0.8rem;">
+                            <span style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace;" id="time-start">1</span>
+                            <input type="range" id="timeline-slider" min="0" max="39" value="0">
+                            <span style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace;" id="time-end">40</span>
+                        </div>
+                        <select id="select-speed">
+                            <option value="160">0.5x Playback Speed</option>
+                            <option value="80" selected>1.0x Playback Speed</option>
+                            <option value="40">2.0x Playback Speed</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Bottom Row: Quantitative Metrics Card -->
+                    <div style="margin-top: 1.5rem;">
+                        <div class="detail-card" style="background: #ffffff; padding: 1.5rem;">
+                            <h3>Key Diagnostic Metrics</h3>
+                            <div style="display: flex; justify-content: space-between; margin-top: 0.8rem; gap: 1.5rem; flex-wrap: wrap;">
+                                <div style="text-align: center; flex: 1; min-width: 150px;">
+                                    <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Airway Area Reduction</div>
+                                    <div id="val-reduction" style="font-size: 2.5rem; font-weight: 800; color: var(--primary); margin-top: 0.4rem;">--%</div>
+                                    <div id="val-severity" style="font-size: 0.75rem; margin-top: 8px; border-radius: 4px; padding: 4px 10px; display: inline-block; font-weight: bold;"></div>
+                                </div>
+                                <div style="text-align: center; flex: 1; min-width: 150px; border-left: 1px solid var(--card-border);">
+                                    <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Minimum Lumen Area</div>
+                                    <div id="val-lumen" style="font-size: 2.5rem; font-weight: 800; color: #0f766e; margin-top: 0.4rem;">-- px²</div>
+                                    <div style="font-size: 0.7rem; color: #64748b; margin-top: 8px;">*Calibrated relative to sensor depth</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Lumen Geometry (Before/After Slider) -->
+                <div class="tab-content" id="tab-geometry">
+                    <div class="dashboard-grid">
+                        <div class="visual-column">
+                            <div class="detail-card" style="background: #ffffff;">
+                                <h3>Cross-Sectional Compare (Before / After)</h3>
+                                <div class="slider-wrapper">
+                                    <div class="slider-image-container">
+                                        <div style="position: absolute; top: 12px; left: 12px; background: rgba(13, 148, 136, 0.95); color: white; z-index: 10; font-weight: bold; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.75rem; backdrop-filter: blur(4px);">
+                                            Max Open (ก่อนยุบตัว)
+                                        </div>
+                                        <div style="position: absolute; top: 12px; right: 12px; background: var(--danger); color: white; z-index: 10; font-weight: bold; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.75rem; backdrop-filter: blur(4px);">
+                                            Max Collapse (ขณะยุบตัว)
+                                        </div>
+                                        <img src="" id="result-img" class="base-image">
+                                        <img src="" id="collapse-img" class="collapse-image">
+                                        <img src="" id="heatmap-img" class="heatmap-image">
+                                        <img src="" id="contour-img" class="contour-image">
+                                        <input type="range" min="0" max="100" value="0" class="slider-control" id="xai-slider">
+                                        <div class="slider-line"></div>
+                                    </div>
+                                    <div class="slider-labels">
+                                        <span>Max Open (ก่อนยุบตัว)</span>
+                                        <span>เลื่อนแกนจับเพื่อเปรียบเทียบลักษณะรูปทรง</span>
+                                        <span>Max Collapse (ขณะยุบตัว)</span>
+                                    </div>
+                                </div>
+                                <div style="display: flex; justify-content: center; gap: 1.5rem; font-size: 0.85rem; color: var(--text-muted); margin-top: 1rem;">
+                                    <label style="cursor: pointer; display: flex; align-items: center; gap: 0.4rem;">
+                                        <input type="checkbox" id="toggle-heatmap" checked style="width: auto;"> Show Depth Heatmap
+                                    </label>
+                                    <label style="cursor: pointer; display: flex; align-items: center; gap: 0.4rem;">
+                                        <input type="checkbox" id="toggle-contour" checked style="width: auto;"> Show Contour & Ellipse
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="analysis-column">
+                            <div class="detail-card" style="background: #ffffff;">
+                                <h3>3-Phase Cross-Section Profiles</h3>
+                                <div style="background: var(--bg-light); border: 1px solid var(--card-border); border-radius: 12px; padding: 1rem; margin-top: 0.5rem;">
+                                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; text-align: center;">
+                                        <div style="background: #ffffff; border: 1px solid var(--card-border); padding: 0.5rem; border-radius: 8px;">
+                                            <div style="font-size: 0.7rem; font-weight: 700; color: #0d9488; margin-bottom: 0.3rem;">Max Open</div>
+                                            <div style="width: 100%; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: var(--bg-light); border-radius: 6px; border: 1px solid var(--card-border); overflow: hidden;">
+                                                <canvas id="canvas-phase-max" width="150" height="150" style="width: 100%; height: 100%;"></canvas>
+                                            </div>
+                                            <div id="phase-area-max" style="font-size: 0.8rem; font-weight: bold; color: #0d9488; margin-top: 0.4rem; font-family: monospace;">-- px²</div>
+                                        </div>
+                                        <div style="background: #ffffff; border: 1px solid var(--card-border); padding: 0.5rem; border-radius: 8px;">
+                                            <div style="font-size: 0.7rem; font-weight: 700; color: #d97706; margin-bottom: 0.3rem;">Transition</div>
+                                            <div style="width: 100%; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: var(--bg-light); border-radius: 6px; border: 1px solid var(--card-border); overflow: hidden;">
+                                                <canvas id="canvas-phase-mid" width="150" height="150" style="width: 100%; height: 100%;"></canvas>
+                                            </div>
+                                            <div id="phase-area-mid" style="font-size: 0.8rem; font-weight: bold; color: #d97706; margin-top: 0.4rem; font-family: monospace;">-- px²</div>
+                                        </div>
+                                        <div style="background: #ffffff; border: 1px solid var(--card-border); padding: 0.5rem; border-radius: 8px;">
+                                            <div style="font-size: 0.7rem; font-weight: 700; color: var(--danger); margin-bottom: 0.3rem;">Max Collapse</div>
+                                            <div style="width: 100%; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: var(--bg-light); border-radius: 6px; border: 1px solid var(--card-border); overflow: hidden;">
+                                                <canvas id="canvas-phase-min" width="150" height="150" style="width: 100%; height: 100%;"></canvas>
+                                            </div>
+                                            <div id="phase-area-min" style="font-size: 0.8rem; font-weight: bold; color: var(--danger); margin-top: 0.4rem; font-family: monospace;">-- px²</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Area Signal Canvas -->
+                            <div class="detail-card" style="background: #ffffff; margin-top: 1rem;">
+                                <h3>Lumen Area Breathing Signal</h3>
+                                <div style="background: var(--bg-light); border: 1px solid var(--card-border); border-radius: 12px; padding: 1rem; margin-top: 0.5rem;">
+                                    <div style="position: relative; width: 100%; height: 120px; background: #ffffff; border: 1px solid var(--card-border); border-radius: 6px;">
+                                        <canvas id="canvas-breathing-signal" style="width: 100%; height: 100%; display: block;"></canvas>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-muted); margin-top: 0.5rem; font-family: monospace;">
+                                        <span style="font-weight: bold; color: #0d9488;">Expiration (Open)</span>
+                                        <span>Frame: <strong id="signal-active-frame" style="color: var(--primary);">1</strong> / 40</span>
+                                        <span style="font-weight: bold; color: var(--danger);">Inspiration (Collapse)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Clinical Report & Academic Reasoning -->
+                <div class="tab-content" id="tab-report">
+                    <div id="borderline-warning" class="warning-alert" style="display: none; background: #fffbeb; border: 1px solid #f59e0b; color: #b45309; padding: 1rem; border-radius: 8px; font-size: 0.85rem; margin-bottom: 1.5rem; font-weight: bold;">
+                        ⚠️ ข้อควรระวังทางเรขาคณิต: ค่าความเชื่อมั่นต่ำกว่า 60% สรีระทางเดินหายใจอาจก้ำกึ่งหรือมีรูปร่างไม่ชัดเจน กรุณาประเมินตามประเด็นของแพทย์
+                    </div>
+                    
+                    <div class="dashboard-grid">
+                        <div class="analysis-column" style="display: flex; flex-direction: column; gap: 1.5rem;">
+                            <!-- Classification Results -->
+                            <div class="detail-card" style="border-left: 4px solid var(--primary); background: #ffffff;">
+                                <h3>Geometric Classification</h3>
+                                <div class="collapse-type" id="geom-collapse-type">Concentric</div>
+                                <div class="confidence-bar-container">
+                                    <div class="confidence-value" id="geom-confidence-value">AI Confidence: 0%</div>
+                                    <div class="mini-progress-bg">
+                                        <div class="mini-progress-fill" id="geom-progress-fill"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Area reduction table -->
+                            <div class="detail-card" style="background: #ffffff;">
+                                <h3>Quantitative Airway Summary</h3>
+                                <div style="display: flex; flex-direction: column; gap: 0.6rem; font-size: 0.88rem; margin-top: 0.5rem;">
+                                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 0.4rem;">
+                                        <span style="color: var(--text-muted); font-weight: 500;">Airway Area Reduction:</span>
+                                        <strong id="val-reduction-report" style="color: var(--primary);">--%</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding-bottom: 0.4rem;">
+                                        <span style="color: var(--text-muted); font-weight: 500;">Minimum Lumen Area:</span>
+                                        <strong id="val-lumen-report" style="color: #0f766e;">-- px²</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Clinical Database Reference Comparison -->
+                            <div class="detail-card" id="clinical-reference-card" style="display: none; border-left: 4px solid #0f766e; background: #ffffff; padding: 1.2rem;">
+                                <h3>Physician Consensus Comparison</h3>
+                                <p class="card-subtitle" style="margin-bottom: 0.8rem; font-size: 0.75rem;">เปรียบเทียบผลลัพธ์คำนวณจริงของ AI กับประวัติเฉลยของแพทย์ (Gold Standard)</p>
+                                <div style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.85rem;">
+                                    <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 0.3rem;">
+                                        <span style="color: var(--text-muted);">ผลแพทย์ (Physicians VOTE):</span>
+                                        <strong id="ref-physician-class" style="color: #0f766e;">--</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 0.3rem;">
+                                        <span style="color: var(--text-muted);">ระดับความรุนแรง (Severity):</span>
+                                        <strong id="ref-physician-degree" style="color: #0f766e;">--</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 0.3rem;">
+                                        <span style="color: var(--text-muted);">สัดส่วนบีบตีบ (GT Reduction):</span>
+                                        <strong id="ref-physician-reduction" style="color: #0f766e;">--%</strong>
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 0.3rem; margin-top: 0.4rem; background: #f0fdfa; border: 1px solid #ccfbf1; padding: 0.6rem; border-radius: 6px;">
+                                        <span style="font-weight: 600; font-size: 0.75rem; color: #0f766e;">🩺 บันทึกทางคลินิกอ้างอิง:</span>
+                                        <p id="ref-physician-reasoning" style="font-size: 0.75rem; line-height: 1.4; color: #1e293b; margin: 0; white-space: pre-line;"></p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="detail-card" id="clinical-reference-empty" style="border-left: 4px solid #94a3b8; background: #ffffff; padding: 1.2rem;">
+                                <h3>Physician Consensus Comparison</h3>
+                                <p class="card-subtitle" style="margin-bottom: 0.4rem; font-size: 0.75rem;">เปรียบเทียบผลลัพธ์คำนวณจริงของ AI กับประวัติเฉลยของแพทย์</p>
+                                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.8rem; text-align: center; font-size: 0.8rem; color: #64748b;">
+                                    👤 เคสคนไข้ใหม่ (ไม่อยู่ในระบบสแกนฐานข้อมูล 30 เคสอ้างอิง)
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Academic Reasoning Card -->
+                        <div class="analysis-column">
+                            <div class="detail-card reasoning-card" style="background: var(--primary-light); border: 1px solid rgba(13, 148, 136, 0.2); min-height: 250px; display: flex; flex-direction: column; height: 100%;">
+                                <h3>Geometric Rationale</h3>
+                                <p id="clinical-reasoning" class="reasoning-text" style="white-space: pre-line; line-height: 1.6; font-size: 0.92rem; color: var(--text-dark); flex: 1;">รอการวิเคราะห์...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Print CTA Button -->
+                    <div style="margin-top: 2rem; text-align: center;">
+                        <button class="btn-primary" onclick="printReport()" style="width: 100%; max-width: 450px; padding: 1.1rem; font-size: 1.05rem;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.4rem;">
+                                <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                                <rect x="6" y="14" width="12" height="8"></rect>
+                            </svg>
+                            Print Official Clinical Report (A4)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Capabilities / Services Section inspired by SparkleClean -->
+    <section class="services-section" id="services-anchor">
+        <div class="container">
+            <div class="section-header">
+                <h2>Clinical Analytics Capabilities</h2>
+                <p>Designed with state-of-the-art computer vision to translate subjective video signals into objective medical features.</p>
+            </div>
+            
+            <div class="services-grid">
+                <!-- Card 1 -->
+                <div class="service-card">
+                    <div class="service-icon-box">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="16"></line>
+                            <line x1="8" y1="12" x2="16" y2="12"></line>
+                        </svg>
+                    </div>
+                    <h3>Automated Segmentation</h3>
+                    <p>Morphological active contour tracking and median filtering ensure clean, noise-free boundaries of the upper airway lumen.</p>
+                </div>
+                
+                <!-- Card 2 -->
+                <div class="service-card">
+                    <div class="service-icon-box">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                            <polyline points="2 17 12 22 22 17"></polyline>
+                            <polyline points="2 12 12 17 22 12"></polyline>
+                        </svg>
+                    </div>
+                    <h3>3D Mesh Modeling</h3>
+                    <p>A dynamic three-dimensional mesh represents the patient's airway envelope, adapting automatically to real-time contraction data.</p>
+                </div>
+                
+                <!-- Card 3 -->
+                <div class="service-card">
+                    <div class="service-icon-box">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 20h9"></path>
+                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                        </svg>
+                    </div>
+                    <h3>Aspect Ratio & Angles</h3>
+                    <p>Fitting equations calculate the aspect ratios and major axis tilt angles of the airway shape to categorize collapse patterns.</p>
+                </div>
+                
+                <!-- Card 4 -->
+                <div class="service-card">
+                    <div class="service-icon-box">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                    </div>
+                    <h3>Standardized Reports</h3>
+                    <p>Generates print-ready diagnostic summaries containing quantified values, reference ranges, and visual patient assets.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer Section -->
+    <footer class="footer">
+        <div class="container">
+            <div>
+                <p style="font-weight: bold; color: white; margin-bottom: 0.3rem; font-size: 1.1rem; font-family: 'Outfit', sans-serif;">DISE Sense Portal</p>
+                <p style="font-size: 0.8rem; color: #64748b;">Clinical 3D Airway Geometric Analytics Platform</p>
+            </div>
+            <div>
+                <p style="font-size: 0.8rem;">&copy; 2026. All rights reserved. Supported by Medical Imaging Research Group.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Official Printable Diagnostic Report (Hidden on Screen, Visible on Print) -->
+    <div id="printable-report-area" class="printable-only">
+        <div class="print-header">
+            <div class="print-logo" style="font-size: 1.5rem; font-weight: bold; border: 2px solid #000; padding: 2px 8px; font-family: monospace; letter-spacing: 1px;">DISE SENSE</div>
+            <div class="print-title">
+                <h1>DISE Airway Geometric Analysis Report</h1>
+                <p>รายงานผลการตรวจทางเดินหายใจส่องกล้องขณะหลับ (Drug-Induced Sleep Endoscopy)</p>
+            </div>
+        </div>
+        
+        <hr class="print-divider">
+        
+        <div class="print-section">
+            <h3>ข้อมูลผลการวิเคราะห์ทางเรขาคณิต (Airway Geometric Analysis)</h3>
+            <table class="print-table">
+                <tr>
+                    <th>ดัชนีชี้วัดเชิงคำนวณ (Automated Metric)</th>
+                    <th>ผลลัพธ์ (Value)</th>
+                    <th>เกณฑ์อ้างอิงทางคลินิก (Reference Range)</th>
+                </tr>
+                <tr>
+                    <td><b>เปอร์เซ็นต์การตีบแคบของช่องลม (Airway Reduction)</b></td>
+                    <td id="print-val-reduction" style="font-weight: bold; font-size: 1.15rem; color: #dc2626;">--%</td>
+                    <td>Mild: &lt;50% | Partial: 50-75% | Severe: &gt;75%</td>
+                </tr>
+                <tr>
+                    <td><b>พื้นที่ช่องลมที่แคบที่สุด (Min Lumen Area)</b></td>
+                    <td id="print-val-lumen" style="font-weight: bold; font-size: 1.1rem;">-- px²</td>
+                    <td>อ้างอิงตามระดับความลึกเซนเซอร์กล้อง</td>
+                </tr>
+                <tr>
+                    <td><b>การวินิจฉัยเชิงเรขาคณิต (Geometric Classification)</b></td>
+                    <td id="print-geom-type" style="font-weight: bold; font-size: 1.15rem; color: #1e3a8a;">--</td>
+                    <td>Concentric / AP / Lateral</td>
+                </tr>
+                <tr>
+                    <td><b>ระดับความรุนแรงของการอุดกั้น (Obstruction Severity)</b></td>
+                    <td id="print-val-severity" style="font-weight: bold; font-size: 1.15rem; color: #dc2626;">--</td>
+                    <td>ประเมินจากอัตราการยุบตัวของช่องลม</td>
+                </tr>
+            </table>
+        </div>
+        
+        <div class="print-section print-images-section">
+            <h3>ภาพจำลองวินิจฉัยทางเรขาคณิต (Visual Clinical Evidences)</h3>
+            <div class="print-images-grid" style="display: flex; gap: 1.5rem; justify-content: center; margin-top: 0.5rem;">
+                <div class="print-img-box" style="text-align: center; border: 1px solid #ddd; padding: 0.5rem; border-radius: 4px; width: 45%;">
+                    <p style="margin: 0 0 0.4rem 0; font-size: 0.8rem; font-weight: bold;">ภาพตัดขวางช่วงตีบตันที่สุด (Narrowest Frame Contour)</p>
+                    <img id="print-contour-img" src="" alt="Narrowest Frame Contour" style="width: 100%; max-width: 200px; height: auto;">
+                </div>
+                <div class="print-img-box" style="text-align: center; border: 1px solid #ddd; padding: 0.5rem; border-radius: 4px; width: 45%;">
+                    <p style="margin: 0 0 0.4rem 0; font-size: 0.8rem; font-weight: bold;">ภาพวิเคราะห์ความลึก (Depth Heatmap)</p>
+                    <img id="print-heatmap-img" src="" alt="Depth Heatmap" style="width: 100%; max-width: 200px; height: auto;">
+                </div>
+            </div>
+        </div>
+
+        <div class="print-footer" style="margin-top: 3.5rem; display: flex; justify-content: space-between; align-items: flex-end; font-size: 0.85rem;">
+            <div class="print-date-info" style="line-height: 1.6;">
+                <p style="margin: 0;">วันที่พิมพ์รายงาน: <span id="print-report-date">--/--/----</span></p>
+                <p style="margin: 0;">ระบบวิเคราะห์และสร้างภาพสรุป: DISE Sense AI Engine</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js?v=20260607"></script>
+</body>
+</html>
