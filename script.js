@@ -517,11 +517,46 @@ function startProcessing() {
         
         const formData = new FormData();
         formData.append('video', file);
+        const startTime = Date.now();
+        const timeoutThreshold = 90000; // 90 seconds in milliseconds
         
         const uploadUrl = window.location.protocol === 'file:' ? 'http://127.0.0.1:5000/upload' : '/upload';
+        console.log("[FRONTEND FETCH] Target Upload URL: ", uploadUrl);
+        console.log("[FRONTEND FETCH] File details: Name=", file.name, " Size=", file.size, " bytes");
+
+        // Set client-side timeout checking interval
+        const timeoutChecker = setInterval(() => {
+            const elapsed = Date.now() - startTime;
+            if (elapsed >= timeoutThreshold && backendResultData === null) {
+                console.error("[FRONTEND TIMEOUT] Request exceeded 90s timeout.");
+                clearInterval(timeoutChecker);
+                alert("Processing is taking too long. Please try uploading a shorter or smaller video resolution.");
+                resetApp();
+            }
+        }, 1000);
+
         fetch(uploadUrl, { method: 'POST', body: formData })
-        .then(response => response.json())
+        .then(async response => {
+            clearInterval(timeoutChecker); // Clear checker if response arrived
+            console.log("[FRONTEND FETCH] Response status received: ", response.status, response.statusText);
+            if (!response.ok) {
+                let errorMsg = `Server returned status ${response.status}: ${response.statusText}`;
+                try {
+                    const text = await response.text();
+                    console.error("[FRONTEND FETCH] Error body text: ", text);
+                    try {
+                        const parsed = JSON.parse(text);
+                        if (parsed && parsed.error) {
+                            errorMsg = parsed.error;
+                        }
+                    } catch(e) {}
+                } catch(e) {}
+                throw new Error(errorMsg);
+            }
+            return response.json();
+        })
         .then(data => {
+            console.log("[FRONTEND FETCH] Processing successful. Response data received.");
             if(data.error) {
                 alert("เกิดข้อผิดพลาดจากระบบประมวลผล: " + data.error);
                 resetApp();
@@ -530,7 +565,16 @@ function startProcessing() {
             }
         })
         .catch(error => {
-            alert("ไม่สามารถติดต่อเครื่องยนต์ประมวลผลทางเรขาคณิตได้: " + error);
+            clearInterval(timeoutChecker); // Clear checker on failure
+            console.error("[FRONTEND FETCH] Critical failure: ", error);
+            const detail = error.message || error.toString();
+            let userFriendlyMsg = `ไม่สามารถติดต่อเครื่องเซิร์ฟเวอร์ประมวลผลภาพทางเรขาคณิตได้:\n\nรายละเอียดข้อผิดพลาด:\n${detail}\n\nข้อแนะนำสำหรับการแก้ปัญหา:\n`;
+            if (detail.includes("Failed to fetch") || detail.includes("NetworkError") || detail.includes("status 504") || detail.includes("status 502")) {
+                userFriendlyMsg += `1. เครื่องประมวลผลปลายทาง (Render Free tier) อาจกำลังหลับหรือค้างเนื่องจากหมดเวลาจำกัดของเซิร์ฟเวอร์ (Server Timeout/Restart)\n2. กรุณาทดลองส่งอัปโหลดไฟล์วิดีโอที่มีขนาดสั้นลง หรือขนาดความละเอียดภาพน้อยลง\n3. ตรวจสอบสถานะการเชื่อมต่ออินเทอร์เน็ตของคุณอีกครั้ง`;
+            } else {
+                userFriendlyMsg += `1. หากไฟล์มีขนาดใหญ่เกินพิกัด ระบบอาจปฏิเสธการอัปโหลด\n2. กรุณาลองอัปโหลดไฟล์วิดีโอที่มีขนาดความละเอียดน้อยลง หรือมีคาบช่วงเวลาที่สั้นลง`;
+            }
+            alert(userFriendlyMsg);
             resetApp();
         });
 
@@ -648,11 +692,29 @@ function showResults() {
     heatmapImg.style.opacity = '1';
     contourImg.style.opacity = '1';
 
-    // Set Borderline Warnings based on confidence/clarity
+    // Set Borderline Warnings based on confidence/clarity and reliability indicators
     const confVal = backendResultData.confidence;
     const warningBox = document.getElementById('borderline-warning');
-    if (confVal < 60) {
+    const warningList = document.getElementById('warning-list');
+    
+    if (backendResultData.is_low_reliability) {
         warningBox.style.display = 'block';
+        if (warningList) {
+            warningList.innerHTML = '';
+            // Display warnings from backend if any, otherwise default
+            const warnings = backendResultData.warnings || [];
+            if (warnings.length > 0) {
+                warnings.forEach(w => {
+                    const li = document.createElement('li');
+                    li.textContent = w;
+                    warningList.appendChild(li);
+                });
+            } else {
+                const li = document.createElement('li');
+                li.textContent = "ค่าความเชื่อมั่นในการวิเคราะห์ภาพต่ำกว่าเกณฑ์ปกติ (Analysis Quality Score < 60%)";
+                warningList.appendChild(li);
+            }
+        }
     } else {
         warningBox.style.display = 'none';
     }
@@ -672,7 +734,7 @@ function showResults() {
         severityBadge.style.background = "#fffbeb";
         severityBadge.style.color = "#d97706";
     } else {
-        severityBadge.innerHTML = "Mild / Normal (Degree 0: <50%)";
+        severityBadge.innerHTML = "Mild / Normal (Degree 0: <=50%)";
         severityBadge.style.background = "#ecfdf5";
         severityBadge.style.color = "#059669";
     }
@@ -682,11 +744,25 @@ function showResults() {
 
     // Set Automated Reference Metrics card text
     document.getElementById('val-reduction-report').textContent = reduction.toFixed(1) + '%';
-    document.getElementById('val-lumen-report').textContent = backendResultData.min_lumen_area.toFixed(0) + ' px2';
+    document.getElementById('val-lumen-report').textContent = backendResultData.min_lumen_area.toFixed(0) + ' px²';
+    
+    // Set max lumen area in the report
+    const valMaxAreaReport = document.getElementById('val-max-area-report');
+    if (valMaxAreaReport && backendResultData.max_lumen_area) {
+        valMaxAreaReport.textContent = backendResultData.max_lumen_area.toFixed(0) + ' px²';
+    }
+    
+    // Set breathing cycle frames
+    const valPeakOpen = document.getElementById('val-peak-open');
+    const valPeakCollapse = document.getElementById('val-peak-collapse');
+    if (valPeakOpen && valPeakCollapse) {
+        valPeakOpen.textContent = backendResultData.selected_cycle_open_frame + 1;
+        valPeakCollapse.textContent = backendResultData.selected_cycle_collapse_frame + 1;
+    }
 
     // Update Text Data for Geometry on screen
     document.getElementById('geom-collapse-type').textContent = backendResultData.prediction_class + ' (Degree ' + backendResultData.degree + ')';
-    document.getElementById('geom-confidence-value').textContent = 'AI Confidence: ' + confVal.toFixed(1) + '%';
+    document.getElementById('geom-confidence-value').textContent = 'Analysis Quality Score: ' + confVal.toFixed(1) + '%';
     document.getElementById('geom-progress-fill').style.width = confVal.toFixed(1) + '%';
     document.getElementById('clinical-reasoning').textContent = backendResultData.reasoning_text;
 
@@ -709,7 +785,7 @@ function showResults() {
 
     // Synchronize Printable Report Fields
     document.getElementById('print-val-reduction').textContent = reduction.toFixed(1) + '%';
-    document.getElementById('print-val-lumen').textContent = backendResultData.min_lumen_area.toFixed(0) + ' px2';
+    document.getElementById('print-val-lumen').textContent = backendResultData.min_lumen_area.toFixed(0) + ' px²';
     document.getElementById('print-geom-type').textContent = backendResultData.prediction_class + ' (Degree ' + backendResultData.degree + ')';
     
     let severityText = "";
@@ -718,7 +794,7 @@ function showResults() {
     } else if (reduction > 50) {
         severityText = "Partial Collapse (ระดับ 1: 50-75%)";
     } else {
-        severityText = "Mild / Normal (ระดับ 0: <50%)";
+        severityText = "Mild / Normal (ระดับ 0: <=50%)";
     }
     document.getElementById('print-val-severity').textContent = severityText;
 

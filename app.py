@@ -3,8 +3,19 @@ import cv2
 import numpy as np
 import base64
 import uuid
+import tempfile
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
+
+# Initialize Flask App
+app = Flask(__name__, static_folder='.', static_url_path='')
+CORS(app)
+app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
+
+@app.errorhandler(413)
+def request_entity_too_large(error):
+    print("[BACKEND ERROR] Uploaded file is too large (Entity Too Large).")
+    return jsonify({"error": "Video file is too large. Please upload a shorter or smaller DISE video (max 50 MB)."}), 413
 
 # ----------------------------------------------------
 # AI Deep Learning Model (Disabled per Advisor's request)
@@ -323,22 +334,43 @@ def home():
 
 @app.route('/upload', methods=['POST'])
 def upload_video():
+    print("[BACKEND LOG] /upload endpoint called.")
     if 'video' not in request.files:
+        print("[BACKEND ERROR] 'video' file part missing in request.files.")
         return jsonify({"error": "ไม่พบไฟล์วิดีโอ"}), 400
         
     video_file = request.files['video']
     original_filename = video_file.filename
-    temp_filename = f"temp_{uuid.uuid4().hex}.mp4"
-    video_file.save(temp_filename)
+    print(f"[BACKEND LOG] Received file: {original_filename}")
     
-    file_size = os.path.getsize(temp_filename)
+    # Save file to a secure temporary directory (/tmp)
+    temp_fd, temp_filename = tempfile.mkstemp(suffix=".mp4")
+    os.close(temp_fd) # Close file descriptor so other processes can write/read
+    
     try:
+        video_file.save(temp_filename)
+        print(f"[BACKEND LOG] Video successfully saved to tmp path: {temp_filename}")
+        
+        file_size = os.path.getsize(temp_filename)
+        print(f"[BACKEND LOG] Temporary video file size: {file_size} bytes")
+        
+        print("[BACKEND LOG] Opening video file via OpenCV (cv2.VideoCapture)...")
         cap = cv2.VideoCapture(temp_filename)
-        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        if total_frames <= 0:
-            return jsonify({"error": "ไม่สามารถอ่านเฟรมจากไฟล์วิดีโอได้"}), 400
+        if not cap.isOpened():
+            print("[BACKEND ERROR] OpenCV could not open the video file.")
+            return jsonify({"error": "OpenCV cannot open this video file structure."}), 400
             
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        print(f"[BACKEND LOG] Total frames counted: {total_frames}")
+        if total_frames <= 0:
+            cap.release()
+            return jsonify({"error": "ไม่สามารถอ่านเฟรมจากไฟล์วิดีโอได้ หรือไฟล์มีขนาด 0 เฟรม"}), 400
+            
+        import time
+        start_time = time.time()
+        
         # 1. Robust ROI Detection by scanning multiple frames
+        print("[BACKEND LOG] ROI detection started...")
         frame_indices = [int(total_frames * p) for p in [0.05, 0.15, 0.3, 0.5, 0.7, 0.85]]
         valid_boxes = []
         for f_idx in frame_indices:
@@ -375,11 +407,18 @@ def upload_video():
             else:
                 x, y, w, h = 0, 0, 640, 480
                 
+        print(f"[BACKEND LOG] ROI determined: x={x}, y={y}, w={w}, h={h}. Elapsed: {time.time() - start_time:.2f}s")
         mask_circle = np.zeros((224, 224), dtype=np.uint8)
         cv2.circle(mask_circle, (112, 112), 108, 255, -1)
         
         # 2. Dense video scanning to extract contours and areas
-        sample_rate = 2
+        print("[BACKEND LOG] Dense video scan started...")
+        
+        # Fast processing mode for Render deployment: limit to max 120 samples
+        max_samples = 120
+        sample_rate = max(1, total_frames // max_samples)
+        print(f"[BACKEND LOG] Processing frame skip interval = {sample_rate} (total_frames={total_frames})")
+        
         sampled_frames = []
         raw_areas = []
         
@@ -388,6 +427,11 @@ def upload_video():
         prev_a = None
         consecutive_failures = 0
         for i in range(total_frames):
+            # Timeout protection: Stop processing if taking too long (e.g. > 45 seconds to leave buffer for dynamic slicing)
+            if time.time() - start_time > 45.0:
+                print("[BACKEND WARNING] Process reached time limit during dense scan. Stopping early.")
+                break
+                
             ret, frame = cap.read()
             if not ret: break
             if i % sample_rate != 0: continue
@@ -410,6 +454,8 @@ def upload_video():
                 
             raw_areas.append(area)
             sampled_frames.append(i)
+            
+        print(f"[BACKEND LOG] Dense scan finished. Sampled {len(sampled_frames)} frames. Elapsed: {time.time() - start_time:.2f}s")
             
         # 3. Smooth the area signal using Median Filter & Moving Average
         raw_areas = np.array(raw_areas)
@@ -681,9 +727,18 @@ def upload_video():
                 "reasoning": get_reasoning_text(gt)
             }
             
-        # Generate annotated sequence frames for the 2D clip player
+        # Generate downsampled annotated sequence frames for the 2D clip player (max 10 frames)
+        print("[BACKEND LOG] Downsampling visualization sequence frames...")
         sequence_base64 = []
-        for idx, img in enumerate(cropped_frames):
+        num_frames = len(cropped_frames)
+        max_visual_frames = 10
+        if num_frames <= max_visual_frames:
+            visual_indices = list(range(num_frames))
+        else:
+            visual_indices = [int(i * (num_frames - 1) / (max_visual_frames - 1)) for i in range(max_visual_frames)]
+            
+        for idx in visual_indices:
+            img = cropped_frames[idx]
             img_draw = img.copy()
             contour = contour_slices[idx]
             pts_draw = np.array(contour, dtype=np.int32).reshape((-1, 1, 2))
@@ -695,7 +750,7 @@ def upload_video():
             cy_draw = int(np.mean(pts_draw[:, 0, 1])) if len(pts_draw) > 0 else 112
             cv2.circle(img_draw, (cx_draw, cy_draw), 3, (0, 0, 255), -1) # Red centroid dot
             
-            _, buffer_seq = cv2.imencode('.jpg', img_draw, [cv2.IMWRITE_JPEG_QUALITY, 60])
+            _, buffer_seq = cv2.imencode('.jpg', img_draw, [cv2.IMWRITE_JPEG_QUALITY, 55])
             seq_b64 = base64.b64encode(buffer_seq).decode('utf-8')
             sequence_base64.append(f"data:image/jpeg;base64,{seq_b64}")
             
@@ -723,10 +778,10 @@ def upload_video():
         mask_indices = (mask > 0)
         heatmap_blended[mask_indices] = (alpha * heatmap_color[mask_indices] + (1 - alpha) * min_crop_img[mask_indices]).astype(np.uint8)
         
-        _, buffer_hm = cv2.imencode('.jpg', heatmap_blended)
+        _, buffer_hm = cv2.imencode('.jpg', heatmap_blended, [cv2.IMWRITE_JPEG_QUALITY, 60])
         heatmap_base64 = base64.b64encode(buffer_hm).decode('utf-8')
         
-        _, buffer = cv2.imencode('.jpg', min_crop_img)
+        _, buffer = cv2.imencode('.jpg', min_crop_img, [cv2.IMWRITE_JPEG_QUALITY, 60])
         img_base64 = base64.b64encode(buffer).decode('utf-8')
         
         ai_analysis_result = {
@@ -735,6 +790,10 @@ def upload_video():
             "confidence": 0.0,
             "all_probabilities": {}
         }
+        
+        # Determine downsampled contour slices and slice areas matching visual sequence
+        downsampled_slices = [contour_slices[i] for i in visual_indices]
+        downsampled_areas = [slice_areas[i] for i in visual_indices]
         
         result = {
             "prediction_class": prediction_class,
@@ -748,23 +807,29 @@ def upload_video():
             "min_lumen_area": float(min_lumen_area),
             "reduction_percent": float(reduction_percent),
             "reasoning_text": reasoning_text,
-            "contour_slices": contour_slices,
-            "slice_areas": slice_areas,
+            "contour_slices": downsampled_slices,
+            "slice_areas": downsampled_areas,
             "ai_analysis": ai_analysis_result,
             "clip_idx": clip_idx,
             "clinical_reference": clinical_reference
         }
         
-        cap.release()
-        os.remove(temp_filename)
+        print("[BACKEND LOG] Response JSON prepared successfully.")
         return jsonify(result)
         
     except Exception as e:
-        if os.path.exists(temp_filename):
-            os.remove(temp_filename)
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+    finally:
+        if 'cap' in locals():
+            cap.release()
+        if os.path.exists(temp_filename):
+            try:
+                os.remove(temp_filename)
+                print("[BACKEND LOG] Cleanup completed: Temporary video file deleted.")
+            except Exception as rm_err:
+                print(f"[BACKEND WARNING] Could not remove temp file: {str(rm_err)}")
 if __name__ == '__main__':
     import os
     port = int(os.environ.get('PORT', 5000))
