@@ -692,49 +692,23 @@ function showResults() {
     heatmapImg.style.opacity = '1';
     contourImg.style.opacity = '1';
 
-    // Set Borderline Warnings based on confidence/clarity and reliability indicators
-    const confVal = backendResultData.confidence;
-    const warningBox = document.getElementById('borderline-warning');
-    const warningList = document.getElementById('warning-list');
-    
-    if (backendResultData.is_low_reliability) {
-        warningBox.style.display = 'block';
-        if (warningList) {
-            warningList.innerHTML = '';
-            // Display warnings from backend if any, otherwise default
-            const warnings = backendResultData.warnings || [];
-            if (warnings.length > 0) {
-                warnings.forEach(w => {
-                    const li = document.createElement('li');
-                    li.textContent = w;
-                    warningList.appendChild(li);
-                });
-            } else {
-                const li = document.createElement('li');
-                li.textContent = "ค่าความเชื่อมั่นในการวิเคราะห์ภาพต่ำกว่าเกณฑ์ปกติ (Analysis Quality Score < 60%)";
-                warningList.appendChild(li);
-            }
-        }
-    } else {
-        warningBox.style.display = 'none';
-    }
-
     // Set reduction percentage
     const reduction = backendResultData.reduction_percent;
     document.getElementById('val-reduction').textContent = reduction.toFixed(1) + '%';
     
     // Determine severity from VOTE classification values
     const severityBadge = document.getElementById('val-severity');
-    if (reduction > 75) {
-        severityBadge.innerHTML = "Severe Collapse (Degree 2: >75%)";
+    const degree = backendResultData.degree;
+    if (degree === 2) {
+        severityBadge.innerHTML = `Severe Collapse (Degree 2: >75%)`;
         severityBadge.style.background = "#fef2f2";
         severityBadge.style.color = "#dc2626";
-    } else if (reduction > 50) {
-        severityBadge.innerHTML = "Partial Collapse (Degree 1: 50-75%)";
+    } else if (degree === 1) {
+        severityBadge.innerHTML = `Partial Collapse (Degree 1: 50-75%)`;
         severityBadge.style.background = "#fffbeb";
         severityBadge.style.color = "#d97706";
     } else {
-        severityBadge.innerHTML = "Mild / Normal (Degree 0: <=50%)";
+        severityBadge.innerHTML = `Mild / Normal (Degree 0: <=50%)`;
         severityBadge.style.background = "#ecfdf5";
         severityBadge.style.color = "#059669";
     }
@@ -761,10 +735,82 @@ function showResults() {
     }
 
     // Update Text Data for Geometry on screen
+    const confVal = backendResultData.confidence;
     document.getElementById('geom-collapse-type').textContent = backendResultData.prediction_class + ' (Degree ' + backendResultData.degree + ')';
     document.getElementById('geom-confidence-value').textContent = 'Analysis Quality Score: ' + confVal.toFixed(1) + '%';
     document.getElementById('geom-progress-fill').style.width = confVal.toFixed(1) + '%';
     document.getElementById('clinical-reasoning').textContent = backendResultData.reasoning_text;
+
+    // Expose Diagnostic Geometry Values to panel
+    document.getElementById('dbg-frames').textContent = `${backendResultData.selected_cycle_open_frame} / ${backendResultData.selected_cycle_collapse_frame}`;
+    document.getElementById('dbg-actual-frames').textContent = `${backendResultData.actual_open_frame} / ${backendResultData.actual_collapse_frame}`;
+    document.getElementById('dbg-areas').textContent = `${backendResultData.max_lumen_area.toFixed(0)} / ${backendResultData.min_lumen_area.toFixed(0)} px²`;
+    document.getElementById('dbg-collapse-used').textContent = `${backendResultData.collapse_area_used_for_reduction.toFixed(0)} px²`;
+    document.getElementById('dbg-reduction').textContent = `${reduction.toFixed(1)}%`;
+    document.getElementById('dbg-contours').textContent = `${backendResultData.valid_contour_count} / ${backendResultData.fallback_contour_count}`;
+    document.getElementById('dbg-contours-lowest').textContent = backendResultData.fallback_count_in_lowest_10_percent;
+    document.getElementById('dbg-aspect').textContent = backendResultData.avg_aspect.toFixed(2);
+    document.getElementById('dbg-angle').textContent = backendResultData.avg_angle.toFixed(1) + '°';
+    document.getElementById('dbg-bbox').textContent = `${(backendResultData.red_major * 100).toFixed(1)}% / ${(backendResultData.red_minor * 100).toFixed(1)}%`;
+
+    // Process optional Ground Truth Validation Mode comparisons
+    const expClass = document.getElementById('expected-class').value;
+    const expDegree = document.getElementById('expected-degree').value;
+    const dbgAlert = document.getElementById('debug-validation-alert');
+    
+    if (expClass || expDegree !== "") {
+        dbgAlert.style.display = 'block';
+        let matchClass = true;
+        let matchDegree = true;
+        let alertHTML = "";
+
+        if (expClass && expClass !== backendResultData.prediction_class) matchClass = false;
+        if (expDegree !== "" && parseInt(expDegree) !== backendResultData.degree) matchDegree = false;
+
+        if (matchClass && matchDegree) {
+            dbgAlert.style.background = "#dcfce7";
+            dbgAlert.style.color = "#15803d";
+            dbgAlert.style.border = "1px solid #bbf7d0";
+            alertHTML = `✅ VALIDATION PASSED (Matches expected ${expClass || 'any'} D${expDegree !== "" ? expDegree : 'any'})`;
+        } else {
+            dbgAlert.style.background = "#fee2e2";
+            dbgAlert.style.color = "#b91c1c";
+            dbgAlert.style.border = "1px solid #fecaca";
+            alertHTML = `❌ MISMATCH DETECTED<br>Expected: ${expClass || 'N/A'} (Degree ${expDegree !== "" ? expDegree : 'N/A'})<br>Actual: ${backendResultData.prediction_class} (Degree ${backendResultData.degree})`;
+        }
+        dbgAlert.innerHTML = alertHTML;
+    } else {
+        dbgAlert.style.display = 'none';
+    }
+
+    // Dynamic warning injection based on diagnostics values
+    const warningBox = document.getElementById('borderline-warning');
+    const warningList = document.getElementById('warning-list');
+    if (warningBox && warningList) {
+        let warnings = backendResultData.warnings || [];
+        
+        if (backendResultData.close_to_threshold) {
+            warnings.push("ค่าอัตราการยุบตัวของพื้นที่ทางเดินหายใจใกล้เคียงเกณฑ์เปลี่ยนระดับความรุนแรง (Borderline Area Reduction threshold)");
+        }
+        if (backendResultData.fallback_contour_count > (backendResultData.valid_contour_count + backendResultData.fallback_contour_count) * 0.3) {
+            warnings.push("ตรวจพบอัตราการใช้เส้นสมมติช่วยชดเชยระดับสูงเนื่องจากขอบผนังกลืนไปกับทางเดินหายใจ (High Fallback Contour Rate)");
+        }
+        if (backendResultData.min_lumen_area < 50.0) {
+            warnings.push("ขอบเขตช่องคอแฟบลงจนปิดสนิทอย่างสมบูรณ์ (Lumen min area near zero)");
+        }
+        
+        if (backendResultData.is_low_reliability || warnings.length > 0) {
+            warningBox.style.display = 'block';
+            warningList.innerHTML = '';
+            warnings.forEach(w => {
+                const li = document.createElement('li');
+                li.textContent = w;
+                warningList.appendChild(li);
+            });
+        } else {
+            warningBox.style.display = 'none';
+        }
+    }
 
     // Handle Clinical Reference Gold Standard Comparison Card
     const refCard = document.getElementById('clinical-reference-card');
@@ -789,9 +835,9 @@ function showResults() {
     document.getElementById('print-geom-type').textContent = backendResultData.prediction_class + ' (Degree ' + backendResultData.degree + ')';
     
     let severityText = "";
-    if (reduction > 75) {
+    if (degree === 2) {
         severityText = "Severe Collapse (ระดับ 2: >75%)";
-    } else if (reduction > 50) {
+    } else if (degree === 1) {
         severityText = "Partial Collapse (ระดับ 1: 50-75%)";
     } else {
         severityText = "Mild / Normal (ระดับ 0: <=50%)";

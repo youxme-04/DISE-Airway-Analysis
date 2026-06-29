@@ -92,6 +92,37 @@
                         <input type="file" id="file-input" accept="video/mp4" hidden>
                     </div>
                 </div>
+                
+                <!-- Debug mode input fields -->
+                <div style="margin-top: 1rem; border: 1px dashed var(--primary); border-radius: 8px; padding: 1rem; background: var(--bg-light);">
+                    <h4 style="margin-bottom: 0.5rem; color: var(--primary); display: flex; align-items: center; gap: 4px;">
+                        <span>⚙️ Debug / Ground Truth Validation Mode (Optional)</span>
+                    </h4>
+                    <p style="font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.8rem;">
+                        ใส่ค่าของเคสคนไข้นี้เพื่อเปรียบเทียบผลลัพธ์การคัดกรองแบบละเอียดในระบบรายงานสถิติ
+                    </p>
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 140px;">
+                            <label style="font-size: 0.78rem; font-weight: 600; display: block; margin-bottom: 0.3rem;">Expected Pattern:</label>
+                            <select id="expected-class" style="width: 100%; padding: 0.4rem; border-radius: 4px; border: 1px solid var(--card-border);">
+                                <option value="">-- No Expected Value --</option>
+                                <option value="Normal">Normal</option>
+                                <option value="AP">AP</option>
+                                <option value="Lateral">Lateral</option>
+                                <option value="Concentric">Concentric</option>
+                            </select>
+                        </div>
+                        <div style="flex: 1; min-width: 140px;">
+                            <label style="font-size: 0.78rem; font-weight: 600; display: block; margin-bottom: 0.3rem;">Expected Degree:</label>
+                            <select id="expected-degree" style="width: 100%; padding: 0.4rem; border-radius: 4px; border: 1px solid var(--card-border);">
+                                <option value="">-- No Expected Value --</option>
+                                <option value="0">Degree 0 (Normal)</option>
+                                <option value="1">Degree 1 (Partial)</option>
+                                <option value="2">Degree 2 (Complete)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </header>
@@ -207,9 +238,9 @@
                                     <div id="val-severity" style="font-size: 0.75rem; margin-top: 8px; border-radius: 4px; padding: 4px 10px; display: inline-block; font-weight: bold;"></div>
                                 </div>
                                 <div style="text-align: center; flex: 1; min-width: 150px; border-left: 1px solid var(--card-border);">
-                                    <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Selected-cycle collapsed area</div>
+                                    <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Collapse area used for reduction</div>
                                     <div id="val-lumen" style="font-size: 2.5rem; font-weight: 800; color: #0f766e; margin-top: 0.4rem;">-- px²</div>
-                                    <div style="font-size: 0.7rem; color: #64748b; margin-top: 8px;">*Calibrated relative to sensor depth</div>
+                                    <div style="font-size: 0.7rem; color: #64748b; margin-top: 8px;">*Averaged lowest area phase (non-fallback preferred)</div>
                                 </div>
                             </div>
                         </div>
@@ -376,11 +407,57 @@
                                 </div>
                             </div>
 
-                            <div class="detail-card" id="clinical-reference-empty" style="border-left: 4px solid #94a3b8; background: #ffffff; padding: 1.2rem;">
-                                <h3>Physician Consensus Comparison</h3>
-                                <p class="card-subtitle" style="margin-bottom: 0.4rem; font-size: 0.75rem;">เปรียบเทียบผลลัพธ์คำนวณจริงของระบบกับประวัติเฉลยของแพทย์</p>
-                                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.8rem; text-align: center; font-size: 0.8rem; color: #64748b;">
-                                    👤 เคสคนไข้ใหม่ (ไม่อยู่ในระบบสแกนฐานข้อมูล 30 เคสอ้างอิง)
+                            <!-- Diagnostic Validation Diagnostics Card -->
+                            <div class="detail-card" style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 1.2rem;">
+                                <h3 style="color: #475569; display: flex; align-items: center; justify-content: space-between;">
+                                    <span>🔍 Diagnostic Geometry Values</span>
+                                    <span style="font-size: 0.65rem; background: #e2e8f0; color: #475569; padding: 2px 6px; border-radius: 4px;">DEBUG</span>
+                                </h3>
+                                <div style="display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.78rem; margin-top: 0.6rem;">
+                                    <!-- Expected Validation row -->
+                                    <div id="debug-validation-alert" style="display:none; padding: 0.5rem; border-radius: 4px; font-weight: bold; text-align: center; margin-bottom: 0.4rem;"></div>
+                                    
+                                    <!-- Cycle details -->
+                                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.2rem;">
+                                        <span style="color: #64748b;">Selected-Cycle Open/Collapse Frame:</span>
+                                        <span id="dbg-frames" style="font-family: monospace; font-weight: 600;">-- / --</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.2rem;">
+                                        <span style="color: #64748b;">Actual Open/Collapse Frame (Lowest Area):</span>
+                                        <span id="dbg-actual-frames" style="font-family: monospace; font-weight: 600;">-- / --</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.2rem;">
+                                        <span style="color: #64748b;">Max/Min Area:</span>
+                                        <span id="dbg-areas" style="font-family: monospace; font-weight: 600;">-- / -- px²</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.2rem;">
+                                        <span style="color: #64748b;">Collapse Area Used for Reduction:</span>
+                                        <span id="dbg-collapse-used" style="font-family: monospace; font-weight: 600; color: #b91c1c;">-- px²</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.2rem;">
+                                        <span style="color: #64748b;">Area Reduction:</span>
+                                        <span id="dbg-reduction" style="font-family: monospace; font-weight: 600; color: var(--primary);">--%</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.2rem;">
+                                        <span style="color: #64748b;">Total Valid / Fallback Contours:</span>
+                                        <span id="dbg-contours" style="font-family: monospace; font-weight: 600;">-- / --</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.2rem;">
+                                        <span style="color: #64748b;">Fallback in Lowest 25% Phase:</span>
+                                        <span id="dbg-contours-lowest" style="font-family: monospace; font-weight: 600;">--</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.2rem;">
+                                        <span style="color: #64748b;">Min/Max Aspect Ratio:</span>
+                                        <span id="dbg-aspect" style="font-family: monospace; font-weight: 600;">--</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.2rem;">
+                                        <span style="color: #64748b;">Ellipse Angle:</span>
+                                        <span id="dbg-angle" style="font-family: monospace; font-weight: 600;">--°</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.2rem;">
+                                        <span style="color: #64748b;">Red Major / Red Minor:</span>
+                                        <span id="dbg-bbox" style="font-family: monospace; font-weight: 600;">-- / --</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>

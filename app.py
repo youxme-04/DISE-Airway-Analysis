@@ -229,7 +229,7 @@ def resample_contour(contour, num_points=32):
     resampled_y = np.interp(target_dists, cum_dists, pts_closed[:, 1])
     return np.column_stack((resampled_x, resampled_y)).tolist()
 
-def extract_robust_contour(crop_f_resized, mask_circle, prev_contour=None, prev_area=None):
+def extract_robust_contour(crop_f_resized, mask_circle, prev_contour=None, prev_area=None, consecutive_failures=0):
     gray_seq = cv2.cvtColor(crop_f_resized, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(gray_seq, (5, 5), 0)
     blurred[mask_circle == 0] = 255
@@ -310,10 +310,12 @@ def extract_robust_contour(crop_f_resized, mask_circle, prev_contour=None, prev_
                 
     if best_c is not None:
         pts_resampled = resample_contour(best_c, 32)
-        return pts_resampled, best_area, best_c
+        return pts_resampled, best_area, best_c, False
         
-    if prev_contour is not None and prev_area is not None:
-        return prev_contour, prev_area, None
+    # Check consecutive failures constraint. If we failed repeatedly, do NOT reuse a large open contour.
+    # We allow reusing previous contour only if consecutive_failures < 2, otherwise fallback to small lumen.
+    if prev_contour is not None and prev_area is not None and consecutive_failures < 2:
+        return prev_contour, prev_area, None, True
         
     # Default circular backup contour (represents a fully collapsed airway when no lumen is found)
     pts_resampled = []
@@ -326,7 +328,7 @@ def extract_robust_contour(crop_f_resized, mask_circle, prev_contour=None, prev_
         pts_resampled.append([float(x_pt), float(y_pt)])
         
     area = np.pi * R**2
-    return pts_resampled, area, None
+    return pts_resampled, area, None, True
 
 @app.route('/')
 def home():
@@ -439,7 +441,7 @@ def upload_video():
             crop_f = frame[y:y+h, x:x+w]
             crop_f_resized = cv2.resize(crop_f, (224, 224))
             
-            pts, area, raw_c = extract_robust_contour(crop_f_resized, mask_circle, prev_c, prev_a)
+            pts, area, raw_c, is_fallback = extract_robust_contour(crop_f_resized, mask_circle, prev_c, prev_a, consecutive_failures)
             if raw_c is None:
                 consecutive_failures += 1
             else:
@@ -552,6 +554,7 @@ def upload_video():
         prev_c = None
         prev_a = None
         consecutive_failures = 0
+        is_fallback_slices = []
         for i in range(start_f, end_f):
             ret, frame = cap.read()
             if not ret: break
@@ -559,7 +562,7 @@ def upload_video():
             crop_f_resized = cv2.resize(crop_f, (224, 224))
             cropped_frames.append(crop_f_resized)
             
-            pts, area, raw_c = extract_robust_contour(crop_f_resized, mask_circle, prev_c, prev_a)
+            pts, area, raw_c, is_fallback = extract_robust_contour(crop_f_resized, mask_circle, prev_c, prev_a, consecutive_failures)
             if raw_c is None:
                 consecutive_failures += 1
             else:
@@ -575,14 +578,28 @@ def upload_video():
             slice_areas.append(area)
             contour_slices.append(pts)
             frame_raw_contours.append(raw_c)
+            is_fallback_slices.append(is_fallback)
             
         # --- DYNAMIC AI CLASSIFICATION (NO CALIBRATION/CHEATING) ---
         max_lumen_area = max(slice_areas) if slice_areas else 1.0
         min_lumen_area = min(slice_areas) if slice_areas else 0.0
         
-        sorted_areas = sorted(slice_areas)
-        n_collapsed = max(1, int(len(sorted_areas) * 0.1))
-        avg_low_area = np.mean(sorted_areas[:n_collapsed])
+        # Determine actual lowest-area averaging excluding fallback/reused contours where possible
+        # Find indices of lowest 25% areas
+        sorted_indices = np.argsort(slice_areas)
+        n_collapsed_candidates = max(2, int(len(slice_areas) * 0.25))
+        lowest_indices = sorted_indices[:n_collapsed_candidates]
+        
+        # Filter lowest to get non-fallback if possible
+        non_fallback_lowest = [idx for idx in lowest_indices if not is_fallback_slices[idx]]
+        
+        fallback_in_lowest_10_percent = sum(1 for idx in lowest_indices[:max(1, len(lowest_indices)//2)] if is_fallback_slices[idx])
+        
+        if len(non_fallback_lowest) >= 1:
+            avg_low_area = np.mean([slice_areas[idx] for idx in non_fallback_lowest])
+        else:
+            avg_low_area = np.mean([slice_areas[idx] for idx in lowest_indices])
+            
         reduction_percent = (max_lumen_area - avg_low_area) / max_lumen_area * 100
         
         max_idx = int(np.argmax(slice_areas))
@@ -647,7 +664,7 @@ def upload_video():
         red_minor = 1.0 - (h_collapsed / h_open)
         
         prediction_class = 'Concentric'
-        if reduction_percent <= 40:
+        if reduction_percent <= 50:
             prediction_class = 'Normal'
             degree = 0
             all_probs = {'Concentric': 0.0, 'AP': 0.0, 'Lateral': 0.0}
@@ -655,7 +672,7 @@ def upload_video():
             reasoning_text = (
                 "ไม่พบการยุบตัวที่มีนัยสำคัญทางคลินิก สอดคล้องกับรูปแบบ Normal Airway (Degree 0)\n"
                 "💡 หลักการทางเรขาคณิต: ช่องลมรักษาสภาพความกลมและพื้นที่เปิดได้ดีตลอดรอบการหายใจปกติ "
-                f"โดยมีอัตราส่วนการยุบตัวเฉลี่ยต่ำเพียง {reduction_percent:.1f}%"
+                f"โดยมีอัตราส่วนการยุบตัวเฉลี่ยต่ำเพียง {reduction_percent:.1f}% (น้อยกว่าหรือเท่ากับ 50% จัดเป็นปกติ)"
             )
         else:
             if reduction_percent > 75:
@@ -795,6 +812,16 @@ def upload_video():
         downsampled_slices = [contour_slices[i] for i in visual_indices]
         downsampled_areas = [slice_areas[i] for i in visual_indices]
         
+        # Count valid vs fallback contours
+        total_slice_cnt = len(frame_raw_contours)
+        fallback_cnt = sum(1 for c in frame_raw_contours if c is None)
+        valid_cnt = total_slice_cnt - fallback_cnt
+        
+        # Check if reduction_percent is close to critical thresholds (50% or 75% +/- 5%)
+        close_to_threshold = False
+        if abs(reduction_percent - 50.0) <= 5.0 or abs(reduction_percent - 75.0) <= 5.0:
+            close_to_threshold = True
+            
         result = {
             "prediction_class": prediction_class,
             "degree": int(degree),
@@ -805,13 +832,33 @@ def upload_video():
             "contour_base64": f"data:image/png;base64,{contour_base64}",
             "sequence_frames": sequence_base64,
             "min_lumen_area": float(min_lumen_area),
+            "max_lumen_area": float(max_lumen_area),
             "reduction_percent": float(reduction_percent),
             "reasoning_text": reasoning_text,
             "contour_slices": downsampled_slices,
             "slice_areas": downsampled_areas,
             "ai_analysis": ai_analysis_result,
             "clip_idx": clip_idx,
-            "clinical_reference": clinical_reference
+            "clinical_reference": clinical_reference,
+            
+            # Exposing diagnostics values
+            "selected_cycle_open_frame": int(peak_open_frame),
+            "selected_cycle_collapse_frame": int(peak_collapse_frame),
+            "valid_contour_count": int(valid_cnt),
+            "fallback_contour_count": int(fallback_cnt),
+            "avg_aspect": float(avg_aspect),
+            "avg_angle": float(avg_angle),
+            "red_major": float(red_major),
+            "red_minor": float(red_minor),
+            "close_to_threshold": bool(close_to_threshold),
+            
+            # New requested diagnostic variables
+            "avg_low_area": float(avg_low_area),
+            "collapse_area_used_for_reduction": float(avg_low_area),
+            "actual_open_frame": int(start_f + max_idx),
+            "actual_collapse_frame": int(start_f + min_idx),
+            "fallback_count_total": int(fallback_cnt),
+            "fallback_count_in_lowest_10_percent": int(fallback_in_lowest_10_percent)
         }
         
         print("[BACKEND LOG] Response JSON prepared successfully.")
