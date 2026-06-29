@@ -18,14 +18,14 @@
         }
         .metrics-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 1.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1.2rem;
             margin-bottom: 2.5rem;
         }
         .metric-card {
             background: #ffffff;
             border: 1px solid var(--card-border);
-            padding: 2rem 1.5rem;
+            padding: 1.5rem 1rem;
             border-radius: 12px;
             text-align: center;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
@@ -36,32 +36,57 @@
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
         }
         .metric-title {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: var(--text-muted);
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.8px;
-            margin-bottom: 0.6rem;
+            margin-bottom: 0.4rem;
         }
         .metric-value {
-            font-size: 3rem;
+            font-size: 2.5rem;
             font-weight: 800;
             line-height: 1.1;
         }
         .metric-desc {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: var(--text-muted);
-            margin-top: 0.6rem;
+            margin-top: 0.4rem;
         }
         .details-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            grid-template-columns: 1fr;
             gap: 2rem;
         }
-        @media (max-width: 480px) {
-            .details-grid {
-                grid-template-columns: 1fr;
-            }
+        .table-container {
+            overflow-x: auto;
+            margin-top: 1rem;
+        }
+        .conformance-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            border: 1px solid #cbd5e1;
+        }
+        .conformance-table th, .conformance-table td {
+            border: 1px solid #cbd5e1;
+            padding: 10px;
+            text-align: center;
+        }
+        .conformance-table th {
+            background: #f1f5f9;
+            font-weight: bold;
+            color: #1e293b;
+        }
+        .conformance-table td.label-cell {
+            text-align: left;
+            font-weight: bold;
+            background: #f8fafc;
+        }
+        .conformance-table td.match-cell {
+            background: #f0fdf4;
+            font-weight: bold;
+            color: #166534;
         }
     </style>
 </head>
@@ -102,83 +127,186 @@
         <!-- Section Header -->
         <div style="margin-bottom: 2.5rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 1.5rem;">
             <h1 style="font-size: 2rem; color: var(--text-dark); font-weight: 800; font-family: 'Outfit', sans-serif;">
-                Clinical Verification & System Accuracy
+                Clinical Validation & Diagnostics Dashboard
             </h1>
-            <p style="font-size: 0.95rem; line-height: 1.7; color: var(--text-muted); margin-top: 0.6rem; max-width: 800px;">
-                เพื่อพิสูจน์ความแม่นยำและความเที่ยงตรงเชิงวิทยาศาสตร์ (Scientific Accuracy) ของระบบสแกนรูปทรงอัตโนมัติ (Automated Geometric Mode) ระบบได้นำชุดวิดีโอตรวจจริงของแพทย์คนไข้ DISE ทั้งหมด 30 ราย (Clips 1-30) มาประเมินความสอดคล้องเปรียบเทียบกับผลชี้ขาดเฉลยของแพทย์ผู้เชี่ยวชาญ (Otolaryngologist Gold Standard) โดยมีผลการสอบทานดังนี้:
+            <p style="font-size: 0.95rem; line-height: 1.7; color: var(--text-muted); margin-top: 0.6rem; max-width: 900px;">
+                เพื่อยืนยันความแม่นยำทางสถิติและประสิทธิภาพในการประมวลผลเชิงเรขาคณิต (Explainable Geometry Classifier) ของระบบ DISE Sense ทางโครงการวิจัยได้ทำการประเมินผลระบบโดยใช้ชุดภาพวิดีโอตรวจจริงของแพทย์ (DISE Validation Dataset) รวมทั้งสิ้น 30 เคส โดยเปรียบเทียบหาความสอดคล้องโดยตรงกับมติข้อสรุปชี้ขาดของคณะแพทย์ (Otolaryngologist Consensus Gold Standard)
             </p>
         </div>
 
-        <!-- Metrics Cards Grid -->
+        <!-- Section 1: Validation Summary -->
+        <h2 style="font-size: 1.4rem; font-weight: bold; margin-bottom: 1rem; color: #1e293b; font-family: 'Outfit', sans-serif;">1. Validation Summary</h2>
         <div class="metrics-grid">
             <div class="metric-card">
-                <div class="metric-title" style="color: var(--primary);">Screening Accuracy</div>
+                <div class="metric-title" style="color: var(--primary);">Overall Accuracy</div>
                 <div class="metric-value" style="color: var(--primary);">93.3%</div>
-                <div class="metric-desc">ความถูกต้องในการคัดแยกช่องลมที่มีพยาธิสภาพ</div>
+                <div class="metric-desc">ความถูกต้องในการจำแนกคัดกรองระหว่างปกติและตีบแคบ (28/30 เคส)</div>
             </div>
             <div class="metric-card">
-                <div class="metric-title" style="color: #0f766e;">Sensitivity (TPR)</div>
+                <div class="metric-title" style="color: #0f766e;">Sensitivity (Recall)</div>
                 <div class="metric-value" style="color: #0f766e;">96.4%</div>
-                <div class="metric-desc">ความไวระบบในการตรวจคนไข้ที่มีความผิดปกติ</div>
+                <div class="metric-desc">ความไวระบบในการตรวจพบคลิปที่มีการยุบตัวผิดปกติ (27/28 เคส)</div>
             </div>
             <div class="metric-card">
-                <div class="metric-title" style="color: var(--accent);">Specificity (TNR)</div>
-                <div class="metric-value" style="color: var(--accent);">50.0%</div>
-                <div class="metric-desc">ความแม่นยำจำเพาะในการบ่งชี้คนไข้ปกติจริง</div>
+                <div class="metric-title" style="color: #b45309;">Specificity</div>
+                <div class="metric-value" style="color: #b45309;">50.0%</div>
+                <div class="metric-desc">ความเฉพาะเจาะจงในการคัดแยกคลิปที่สรีระเป็นปกติจริง (1/2 เคส)</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title" style="color: #111827;">Precision</div>
+                <div class="metric-value" style="color: #111827;">96.4%</div>
+                <div class="metric-desc">สัดส่วนความถูกต้องในบรรดาผลทำนวณตีบแคบทั้งหมด</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title" style="color: #0369a1;">F1-Score</div>
+                <div class="metric-value" style="color: #0369a1;">96.4%</div>
+                <div class="metric-desc">ค่าเฉลี่ยฮาร์มอนิกประสานความไวและความถูกต้องรวม</div>
             </div>
         </div>
 
         <!-- Details Grid -->
         <div class="details-grid">
-            <!-- Confusion Matrix Card -->
-            <div class="detail-card" style="background: #ffffff; padding: 1.8rem; border-radius: 12px; border: 1px solid var(--card-border);">
-                <h3 style="font-size: 1.2rem; color: var(--text-dark); margin-bottom: 1rem; font-family: 'Outfit', sans-serif;">Confusion Matrix Table</h3>
-                <table class="print-table" style="width: 100%; border-collapse: collapse; font-size: 0.9rem; border-radius: 8px; overflow: hidden; border: 1px solid #cbd5e1;">
-                    <thead>
-                        <tr style="background: #e2e8f0;">
-                            <th style="border: 1px solid #cbd5e1; padding: 12px; text-align: left; font-weight: bold; color: var(--text-dark);">Actual Physicians (N=30)</th>
-                            <th style="border: 1px solid #cbd5e1; padding: 12px; text-align: center; font-weight: bold; color: var(--text-dark);">แพทย์ยืนยัน: ปกติ</th>
-                            <th style="border: 1px solid #cbd5e1; padding: 12px; text-align: center; font-weight: bold; color: var(--text-dark);">แพทย์ยืนยัน: ตีบแคบ</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td style="border: 1px solid #cbd5e1; padding: 12px; font-weight: bold; background: var(--bg-light);">ระบบสแกน: ปกติ</td>
-                            <td style="border: 1px solid #cbd5e1; padding: 12px; text-align: center; background: #e6fcf5; font-weight: bold; color: #0d9488;">1 <br><span style="font-size: 0.7rem; font-weight: normal; color: var(--text-muted);">True Negative</span></td>
-                            <td style="border: 1px solid #cbd5e1; padding: 12px; text-align: center; color: var(--text-muted);">1 <br><span style="font-size: 0.7rem;">False Negative</span></td>
-                        </tr>
-                        <tr>
-                            <td style="border: 1px solid #cbd5e1; padding: 12px; font-weight: bold; background: var(--bg-light);">ระบบสแกน: ตีบแคบ</td>
-                            <td style="border: 1px solid #cbd5e1; padding: 12px; text-align: center; color: var(--text-muted);">1 <br><span style="font-size: 0.7rem;">False Positive</span></td>
-                            <td style="border: 1px solid #cbd5e1; padding: 12px; text-align: center; background: #e6fcf5; font-weight: bold; color: #0d9488;">27 <br><span style="font-size: 0.7rem; font-weight: normal; color: var(--text-muted);">True Positive</span></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- VOTE Diagnostic Consistency Card -->
-            <div class="detail-card" style="background: #ffffff; padding: 1.8rem; border-radius: 12px; border: 1px solid var(--card-border); display: flex; flex-direction: column; justify-content: space-between;">
-                <div>
-                    <h3 style="font-size: 1.2rem; color: var(--text-dark); margin-bottom: 1.2rem; font-family: 'Outfit', sans-serif;">VOTE Diagnostic Concordance</h3>
-                    <div style="display: flex; flex-direction: column; gap: 1rem; font-size: 0.95rem;">
-                        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 0.8rem;">
-                            <span style="color: var(--text-muted);">VOTE Severity Degree Accuracy:</span>
-                            <strong style="color: var(--primary); font-size: 1.1rem;">56.7%</strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 0.8rem;">
-                            <span style="color: var(--text-muted);">VOTE Collapse Shape Concordance:</span>
-                            <strong style="color: var(--primary); font-size: 1.1rem;">83.3%</strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 0.8rem;">
-                            <span style="color: var(--text-muted);">Overall AI Diagnostic Accuracy (VOTE):</span>
-                            <strong style="color: var(--primary); font-size: 1.1rem;">53.3% (16/30)</strong>
-                        </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                <!-- 2A. Collapse Type Confusion Matrix -->
+                <div class="detail-card" style="background: #ffffff; padding: 1.5rem; border-radius: 12px; border: 1px solid var(--card-border);">
+                    <h3 style="font-size: 1.1rem; color: var(--text-dark); margin-bottom: 0.5rem; font-family: 'Outfit', sans-serif; font-weight: 700;">A. Collapse Type Confusion Matrix (3×3)</h3>
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.8rem;">สถิติการจำแนกรูปแบบลักษณะการบีบตีบ (AP vs Concentric vs Normal)</p>
+                    <div class="table-container">
+                        <table class="conformance-table">
+                            <thead>
+                                <tr>
+                                    <th rowspan="2" style="background: #cbd5e1;">Physician (GT)</th>
+                                    <th colspan="3">System Prediction</th>
+                                </tr>
+                                <tr>
+                                    <th>Normal</th>
+                                    <th>AP</th>
+                                    <th>Concentric</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="label-cell">Normal (ปกติ)</td>
+                                    <td class="match-cell">1</td>
+                                    <td>1</td>
+                                    <td>0</td>
+                                </tr>
+                                <tr>
+                                    <td class="label-cell">AP (บีบหน้า-หลัง)</td>
+                                    <td>1</td>
+                                    <td class="match-cell">22</td>
+                                    <td>2</td>
+                                </tr>
+                                <tr>
+                                    <td class="label-cell">Concentric (รอบวง)</td>
+                                    <td>0</td>
+                                    <td>1</td>
+                                    <td class="match-cell">2</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-                <p style="font-size: 0.78rem; line-height: 1.6; color: var(--text-muted); margin-top: 1.5rem; border-top: 1px dashed #cbd5e1; padding-top: 1rem; margin-bottom: 0;">
-                    💡 *หมายเหตุ:* ผลความสอดคล้องข้างต้นได้มาจากการวิเคราะห์โดยระบบสแกนเรขาคณิตอัตโนมัติของ AI สแกนสดแบบอิสระเต็มรูปแบบ (Automated Geometric Scan) โดยไม่พึ่งพาฐานข้อมูลปรับเทียบ
-                </p>
+
+                <!-- 2B. Severity Degree Confusion Matrix -->
+                <div class="detail-card" style="background: #ffffff; padding: 1.5rem; border-radius: 12px; border: 1px solid var(--card-border);">
+                    <h3 style="font-size: 1.1rem; color: var(--text-dark); margin-bottom: 0.5rem; font-family: 'Outfit', sans-serif; font-weight: 700;">B. Severity Degree Confusion Matrix (3×3)</h3>
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.8rem;">สถิติการจำแนกระดับความตีบตันของทางเดินหายใจ (D0 vs D1 vs D2)</p>
+                    <div class="table-container">
+                        <table class="conformance-table">
+                            <thead>
+                                <tr>
+                                    <th rowspan="2" style="background: #cbd5e1;">Physician (GT)</th>
+                                    <th colspan="3">System Prediction</th>
+                                </tr>
+                                <tr>
+                                    <th>D0 (Normal)</th>
+                                    <th>D1 (Partial)</th>
+                                    <th>D2 (Severe)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="label-cell">D0 (<=50% Reduction)</td>
+                                    <td class="match-cell">1</td>
+                                    <td>0</td>
+                                    <td>1</td>
+                                </tr>
+                                <tr>
+                                    <td class="label-cell">D1 (50-75% Reduction)</td>
+                                    <td>1</td>
+                                    <td class="match-cell">2</td>
+                                    <td>7</td>
+                                </tr>
+                                <tr>
+                                    <td class="label-cell">D2 (>75% Reduction)</td>
+                                    <td>0</td>
+                                    <td>3</td>
+                                    <td class="match-cell">15</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                <!-- 3. Clinical Agreement Table -->
+                <div class="detail-card" style="background: #ffffff; padding: 1.5rem; border-radius: 12px; border: 1px solid var(--card-border);">
+                    <h3 style="font-size: 1.1rem; color: var(--text-dark); margin-bottom: 0.8rem; font-family: 'Outfit', sans-serif; font-weight: 700;">3. Clinical Agreement</h3>
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 1rem;">ตารางสรุปเปอร์เซ็นต์ความสอดคล้องของระบบเชิงเปรียบเทียบกับมติเฉลยแพทย์</p>
+                    <table class="conformance-table" style="text-align: left;">
+                        <thead>
+                            <tr>
+                                <th>ดัชนีชี้วัดความเห็นพ้อง (Agreement Target)</th>
+                                <th style="text-align: center;">เปอร์เซ็นต์ความตรงกัน (Concordance Rate)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="font-weight: 600;">Collapse Type Concordance</td>
+                                <td style="text-align: center; font-weight: 800; color: var(--primary); font-size: 1rem;">83.3% (25/30)</td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600;">Severity Concordance</td>
+                                <td style="text-align: center; font-weight: 800; color: var(--primary); font-size: 1rem;">60.0% (18/30)</td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600;">Overall Diagnostic Agreement</td>
+                                <td style="text-align: center; font-weight: 800; color: #0d9488; font-size: 1.1rem;">53.3% (16/30)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.5; margin-top: 1rem;">
+                        *หมายเหตุ: Overall Diagnostic Agreement หมายถึงเปอร์เซ็นต์ที่ระบบทายชนิดรูปทรงการยุบตัวระดับความรุนแรงตรงตามแพทย์วิเคราะห์ได้สมบูรณ์แบบพร้อมกัน
+                    </p>
+                </div>
+
+                <!-- 4. Validation Dataset Information -->
+                <div class="detail-card" style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 1.5rem; border-radius: 12px; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <h3 style="font-size: 1.1rem; color: #334155; margin-bottom: 0.8rem; font-family: 'Outfit', sans-serif; font-weight: 700; display: flex; align-items: center; gap: 0.4rem;">
+                            <span>📊 Validation Dataset Information</span>
+                        </h3>
+                        <div style="font-size: 0.85rem; line-height: 1.6; color: #475569; display: flex; flex-direction: column; gap: 0.5rem;">
+                            <div>• <strong>Total clips:</strong> 30 ผู้ป่วย (pt001 - pt030)</div>
+                            <div>• <strong>Physician Ground Truth:</strong> มติเป็นเอกฉันท์โดยจักษุ-โสตศอนาสิกแพทย์ (Otolaryngologist Consensus)</div>
+                            <div>• <strong>Evaluation Method:</strong> ระบบวิเคราะห์เรขาคณิตอัตโนมัติ (Automated Geometric Analysis) ปราศจากโมเดล Deep Learning</div>
+                            <div>• <strong>Classification Tasks:</strong>
+                                <ul style="margin: 0.2rem 0 0 1.2rem; padding: 0;">
+                                    <li><strong>Collapse Type:</strong> ทิศทางระนาบยุบตัว (AP, Concentric, Normal)</li>
+                                    <li><strong>Severity Degree:</strong> ระดับความยุบตัวของพื้นที่ร้อยละ (Degree 0, 1, 2)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.72rem; color: #64748b; margin-top: 1rem; border-top: 1px dashed #cbd5e1; padding-top: 0.8rem;">
+                        “The selected breathing cycle is the valid open-to-collapse pair with the largest percentage area reduction after smoothing, then refined on raw contour areas within a local neighborhood.”
+                    </div>
+                </div>
+            </div>
+
         </div>
     </main>
 
