@@ -752,6 +752,12 @@ function showResults() {
     document.getElementById('dbg-aspect').textContent = backendResultData.avg_aspect.toFixed(2);
     document.getElementById('dbg-angle').textContent = backendResultData.avg_angle.toFixed(1) + '°';
     document.getElementById('dbg-bbox').textContent = `${(backendResultData.red_major * 100).toFixed(1)}% / ${(backendResultData.red_minor * 100).toFixed(1)}%`;
+    
+    // Injecting the new breathing cycle debug fields
+    document.getElementById('dbg-num-cycles').textContent = backendResultData.num_cycles_evaluated;
+    document.getElementById('dbg-cycle-score').textContent = `${backendResultData.selected_cycle_score.toFixed(1)} / ${backendResultData.selected_cycle_reduction.toFixed(1)}%`;
+    document.getElementById('dbg-window-range').textContent = `${backendResultData.final_window_start + 1} - ${backendResultData.final_window_end}`;
+    document.getElementById('dbg-window-enclose').textContent = `${backendResultData.final_window_contains_open ? 'YES' : 'NO'} / ${backendResultData.final_window_contains_collapse ? 'YES' : 'NO'}`;
 
     // Process optional Ground Truth Validation Mode comparisons
     const expClass = document.getElementById('expected-class').value;

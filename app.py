@@ -474,6 +474,7 @@ def upload_video():
             smoothed_areas[idx] = np.mean(med_areas[start_w:end_w])
             
         # 4. Find local maxima and local minima to detect breathing cycles
+        # "The selected breathing cycle is the valid open-to-collapse pair with the largest percentage area reduction after smoothing, then refined on raw contour areas within a local neighborhood."
         local_maxima = []
         local_minima = []
         n_samples = len(smoothed_areas)
@@ -483,45 +484,79 @@ def upload_video():
             elif smoothed_areas[i] <= smoothed_areas[i-1] and smoothed_areas[i] <= smoothed_areas[i+1]:
                 local_minima.append(i)
                 
-        best_max_idx = None
-        best_min_idx = None
-        found = False
+        # Handle softened open-area rejection: convert threshold to a warning/reliability score check instead of skipping
+        high_open_area_detected = False
         
-        for mx in sorted(local_maxima):
-            if found:
-                break
-            if mx < n_samples * 0.22:
+        # Evaluate all candidate cycles
+        candidate_cycles = []
+        for mx in local_maxima:
+            if mx < n_samples * 0.15:
                 continue
             if smoothed_areas[mx] > 3500:
-                continue
-            mins_after = [mn for mn in local_minima if mx < mn <= mx + 40]
-            for mn in sorted(mins_after):
-                drop = smoothed_areas[mx] - smoothed_areas[mn]
-                if mn < n_samples * 0.90:
-                    if drop > 600:
-                        best_max_idx = mx
-                        best_min_idx = mn
-                        found = True
-                        break
-                        
-        if not found:
-            max_drop = -1
-            for mx in local_maxima:
-                if mx < n_samples * 0.22 or smoothed_areas[mx] > 3500:
-                    continue
-                mins_after = [mn for mn in local_minima if mx < mn <= mx + 40]
-                for mn in mins_after:
-                    drop = smoothed_areas[mx] - smoothed_areas[mn]
-                    if mn < n_samples * 0.90:
-                        if drop > max_drop:
-                            max_drop = drop
-                            best_max_idx = mx
-                            best_min_idx = mn
-                            
+                high_open_area_detected = True
+                # Do not reject, but keep track for warnings
+                
+            # Search candidate troughs by real video frame distance
+            # Let's search for troughs that occur within 60 video frames after the peak
+            mx_frame = sampled_frames[mx]
+            mins_after = [mn for mn in local_minima if mx < mn and (sampled_frames[mn] - mx_frame) <= 60]
+            
+            for mn in mins_after:
+                open_a = smoothed_areas[mx]
+                collapse_a = smoothed_areas[mn]
+                drop = open_a - collapse_a
+                
+                # Require minimum absolute drop of 300 to reject noise
+                if drop > 300:
+                    cycle_red = (drop / open_a) * 100.0
+                    candidate_cycles.append({
+                        "mx": mx,
+                        "mn": mn,
+                        "score": cycle_red,
+                        "reduction": cycle_red
+                    })
+                    
+        num_cycles_evaluated = len(candidate_cycles)
+        
+        best_max_idx = None
+        best_min_idx = None
+        selected_cycle_score = 0.0
+        selected_cycle_reduction = 0.0
+        
+        if candidate_cycles:
+            # Select the pair with the highest cycle_reduction score
+            best_cycle = max(candidate_cycles, key=lambda c: c["score"])
+            best_max_idx = best_cycle["mx"]
+            best_min_idx = best_cycle["mn"]
+            selected_cycle_score = best_cycle["score"]
+            selected_cycle_reduction = best_cycle["reduction"]
+            
         if best_max_idx is not None and best_min_idx is not None:
-            peak_open_frame = sampled_frames[best_max_idx]
-            peak_collapse_frame = sampled_frames[best_min_idx]
+            # 5. Local refinement of selected peak/trough on raw_areas within +/- 2 sample points
+            # Refine peak (max raw area)
+            refined_max_idx = best_max_idx
+            max_raw_val = raw_areas[best_max_idx]
+            for offset in range(-2, 3):
+                test_idx = best_max_idx + offset
+                if 0 <= test_idx < len(raw_areas):
+                    if raw_areas[test_idx] > max_raw_val:
+                        max_raw_val = raw_areas[test_idx]
+                        refined_max_idx = test_idx
+                        
+            # Refine trough (min raw area)
+            refined_min_idx = best_min_idx
+            min_raw_val = raw_areas[best_min_idx]
+            for offset in range(-2, 3):
+                test_idx = best_min_idx + offset
+                if 0 <= test_idx < len(raw_areas):
+                    if raw_areas[test_idx] < min_raw_val:
+                        min_raw_val = raw_areas[test_idx]
+                        refined_min_idx = test_idx
+                        
+            peak_open_frame = sampled_frames[refined_max_idx]
+            peak_collapse_frame = sampled_frames[refined_min_idx]
         else:
+            # Fallback when no cycle matches
             peak_collapse_idx = int(np.argmin(smoothed_areas))
             peak_collapse_frame = sampled_frames[peak_collapse_idx]
             prev_max_areas = smoothed_areas[:peak_collapse_idx]
@@ -531,18 +566,40 @@ def upload_video():
             else:
                 peak_open_frame = max(0, peak_collapse_frame - 20)
                 
-        # 5. Dynamic crop window calculation (40 frames)
-        L_trans = peak_collapse_frame - peak_open_frame
-        if L_trans > 30:
-            start_f = max(0, peak_open_frame - 5)
-        else:
-            transition_center = (peak_open_frame + peak_collapse_frame) // 2
-            start_f = max(0, transition_center - 20)
-        end_f = start_f + 40
+        # 6. Final crop window calculation
+        # The final 40-frame window must include both selected open frame and selected collapse frame
+        # Keep window size at 40 frames normally. If transition exceeds 30 frames, adjust start_f
+        # to ensure peak_collapse_frame fits within [start_f, end_f).
+        left_f = min(peak_open_frame, peak_collapse_frame)
+        right_f = max(peak_open_frame, peak_collapse_frame)
         
+        # If open and collapse fit in 40 frames
+        if (right_f - left_f) < 40:
+            # Align window to cover both
+            start_f = max(0, right_f - 39)
+            # Center it slightly if possible
+            ideal_start = left_f - 2
+            if ideal_start >= 0 and (ideal_start + 40) >= (right_f + 1):
+                start_f = ideal_start
+            end_f = start_f + 40
+        else:
+            # If transition is longer than 40 frames, use a wider measurement window enclosing both
+            start_f = max(0, left_f - 2)
+            end_f = right_f + 3
+            
         if end_f > total_frames:
             end_f = total_frames
-            start_f = max(0, end_f - 40)
+            if (end_f - start_f) < 40:
+                start_f = max(0, end_f - 40)
+                
+        # Safety check: Never let the final measurement window exclude the selected collapse frame
+        if peak_collapse_frame < start_f:
+            start_f = max(0, peak_collapse_frame - 5)
+        if peak_collapse_frame >= end_f:
+            end_f = min(total_frames, peak_collapse_frame + 5)
+            
+        final_window_contains_open = (start_f <= peak_open_frame < end_f)
+        final_window_contains_collapse = (start_f <= peak_collapse_frame < end_f)
             
         # 6. Read and process the 40 cropped frames at 1.0x density
         cap.set(cv2.CAP_PROP_POS_FRAMES, start_f)
@@ -858,7 +915,16 @@ def upload_video():
             "actual_open_frame": int(start_f + max_idx),
             "actual_collapse_frame": int(start_f + min_idx),
             "fallback_count_total": int(fallback_cnt),
-            "fallback_count_in_lowest_10_percent": int(fallback_in_lowest_10_percent)
+            "fallback_count_in_lowest_10_percent": int(fallback_in_lowest_10_percent),
+            
+            # New debug parameters from breathing cycle refinement
+            "num_cycles_evaluated": int(num_cycles_evaluated),
+            "selected_cycle_score": float(selected_cycle_score),
+            "selected_cycle_reduction": float(selected_cycle_reduction),
+            "final_window_start": int(start_f),
+            "final_window_end": int(end_f),
+            "final_window_contains_open": bool(final_window_contains_open),
+            "final_window_contains_collapse": bool(final_window_contains_collapse)
         }
         
         print("[BACKEND LOG] Response JSON prepared successfully.")
