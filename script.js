@@ -718,12 +718,12 @@ function showResults() {
         severityBadge.style.color = "#059669";
     }
 
-    // Set min lumen area text
-    document.getElementById('val-lumen').textContent = backendResultData.min_lumen_area.toFixed(0) + ' px²';
+    // Set min lumen area text to the unified collapse_area_used_for_reduction
+    document.getElementById('val-lumen').textContent = backendResultData.collapse_area_used_for_reduction.toFixed(0) + ' px²';
 
-    // Set Automated Reference Metrics card text
+    // Set Automated Reference Metrics card text to unified values
     document.getElementById('val-reduction-report').textContent = reduction.toFixed(1) + '%';
-    document.getElementById('val-lumen-report').textContent = backendResultData.min_lumen_area.toFixed(0) + ' px²';
+    document.getElementById('val-lumen-report').textContent = backendResultData.collapse_area_used_for_reduction.toFixed(0) + ' px²';
     
     // Set max lumen area in the report
     const valMaxAreaReport = document.getElementById('val-max-area-report');
@@ -731,12 +731,12 @@ function showResults() {
         valMaxAreaReport.textContent = backendResultData.max_lumen_area.toFixed(0) + ' px²';
     }
     
-    // Set breathing cycle frames
+    // Set breathing cycle frames using the refined actual open / collapse frame numbers
     const valPeakOpen = document.getElementById('val-peak-open');
     const valPeakCollapse = document.getElementById('val-peak-collapse');
     if (valPeakOpen && valPeakCollapse) {
-        valPeakOpen.textContent = backendResultData.selected_cycle_open_frame + 1;
-        valPeakCollapse.textContent = backendResultData.selected_cycle_collapse_frame + 1;
+        valPeakOpen.textContent = backendResultData.actual_open_frame + 1;
+        valPeakCollapse.textContent = backendResultData.actual_collapse_frame + 1;
     }
 
     // Update Text Data for Geometry on screen
@@ -823,26 +823,23 @@ function showResults() {
         }
     }
 
-    // Handle Clinical Reference Gold Standard Comparison Card
-    const refCard = document.getElementById('clinical-reference-card');
-    const refEmpty = document.getElementById('clinical-reference-empty');
-    if (backendResultData.clinical_reference) {
+    // Handle Clinical Reference Gold Standard Comparison Card inside Debug panel
+    const refBlock = document.getElementById('dbg-clinical-ref-block');
+    if (backendResultData.clinical_reference && refBlock) {
         const ref = backendResultData.clinical_reference;
-        if (refCard) refCard.style.display = 'block';
-        if (refEmpty) refEmpty.style.display = 'none';
+        refBlock.style.display = 'block';
         
         document.getElementById('ref-physician-class').textContent = ref.class;
         document.getElementById('ref-physician-degree').textContent = 'Degree ' + ref.degree;
         document.getElementById('ref-physician-reduction').textContent = ref.reduction.toFixed(1) + '%';
         document.getElementById('ref-physician-reasoning').innerHTML = ref.reasoning.replace(/\n/g, '<br>');
     } else {
-        if (refCard) refCard.style.display = 'none';
-        if (refEmpty) refEmpty.style.display = 'block';
+        if (refBlock) refBlock.style.display = 'none';
     }
 
     // Synchronize Printable Report Fields
     document.getElementById('print-val-reduction').textContent = reduction.toFixed(1) + '%';
-    document.getElementById('print-val-lumen').textContent = backendResultData.min_lumen_area.toFixed(0) + ' px²';
+    document.getElementById('print-val-lumen').textContent = backendResultData.collapse_area_used_for_reduction.toFixed(0) + ' px²';
     document.getElementById('print-geom-type').textContent = backendResultData.prediction_class + ' (Degree ' + backendResultData.degree + ')';
     
     let severityText = "";

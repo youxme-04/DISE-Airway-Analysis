@@ -256,10 +256,10 @@
                                 <div class="slider-wrapper">
                                     <div class="slider-image-container">
                                         <div style="position: absolute; top: 12px; left: 12px; background: rgba(13, 148, 136, 0.95); color: white; z-index: 10; font-weight: bold; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.75rem; backdrop-filter: blur(4px);">
-                                            Selected-cycle open airway (ก่อนยุบตัว)
+                                            Measured open airway frame (ก่อนยุบตัว)
                                         </div>
                                         <div style="position: absolute; top: 12px; right: 12px; background: var(--danger); color: white; z-index: 10; font-weight: bold; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.75rem; backdrop-filter: blur(4px);">
-                                            Selected-cycle collapsed airway (ขณะยุบตัว)
+                                            Measured collapsed airway frame (ขณะยุบตัว)
                                         </div>
                                         <img src="" id="result-img" class="base-image">
                                         <img src="" id="collapse-img" class="collapse-image">
@@ -269,9 +269,9 @@
                                         <div class="slider-line"></div>
                                     </div>
                                     <div class="slider-labels">
-                                        <span>Selected-cycle open airway (ก่อนยุบตัว)</span>
+                                        <span>Measured open airway frame (ก่อนยุบตัว)</span>
                                         <span>เลื่อนแกนจับเพื่อเปรียบเทียบลักษณะรูปทรง</span>
-                                        <span>Selected-cycle collapsed airway (ขณะยุบตัว)</span>
+                                        <span>Measured collapsed airway frame (ขณะยุบตัว)</span>
                                     </div>
                                 </div>
                                 <div style="display: flex; justify-content: center; gap: 1.5rem; font-size: 0.85rem; color: var(--text-muted); margin-top: 1rem;">
@@ -383,29 +383,7 @@
                                 </div>
                             </div>
 
-                            <!-- Clinical Database Reference Comparison -->
-                            <div class="detail-card" id="clinical-reference-card" style="display: none; border-left: 4px solid #0f766e; background: #ffffff; padding: 1.2rem;">
-                                <h3>Consensus Reference Comparison</h3>
-                                <p class="card-subtitle" style="margin-bottom: 0.8rem; font-size: 0.75rem;">เปรียบเทียบผลลัพธ์คำนวณจริงของโมเดลกับประวัติเฉลยของแพทย์ (Gold Standard)</p>
-                                <div style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.85rem;">
-                                    <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 0.3rem;">
-                                        <span style="color: var(--text-muted);">ผลแพทย์ (Physicians VOTE):</span>
-                                        <strong id="ref-physician-class" style="color: #0f766e;">--</strong>
-                                    </div>
-                                    <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 0.3rem;">
-                                        <span style="color: var(--text-muted);">ระดับความรุนแรง (Severity):</span>
-                                        <strong id="ref-physician-degree" style="color: #0f766e;">--</strong>
-                                    </div>
-                                    <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 0.3rem;">
-                                        <span style="color: var(--text-muted);">สัดส่วนบีบตีบ (GT Reduction):</span>
-                                        <strong id="ref-physician-reduction" style="color: #0f766e;">--%</strong>
-                                    </div>
-                                    <div style="display: flex; flex-direction: column; gap: 0.3rem; margin-top: 0.4rem; background: #f0fdfa; border: 1px solid #ccfbf1; padding: 0.6rem; border-radius: 6px;">
-                                        <span style="font-weight: 600; font-size: 0.75rem; color: #0f766e;">🩺 บันทึกทางคลินิกอ้างอิง:</span>
-                                        <p id="ref-physician-reasoning" style="font-size: 0.75rem; line-height: 1.4; color: #1e293b; margin: 0; white-space: pre-line;"></p>
-                                    </div>
-                                </div>
-                            </div>
+                            <!-- Removed Consensus Reference Comparison from the main user view -->
 
                             <!-- Diagnostic Validation Diagnostics Card -->
                             <div class="detail-card" style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 1.2rem;">
@@ -457,6 +435,26 @@
                                     <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.2rem;">
                                         <span style="color: #64748b;">Red Major / Red Minor:</span>
                                         <span id="dbg-bbox" style="font-family: monospace; font-weight: 600;">-- / --</span>
+                                    </div>
+                                    
+                                    <!-- Embedded optional GT Consensus references -->
+                                    <div id="dbg-clinical-ref-block" style="display: none; margin-top: 0.5rem; border-top: 1px dashed #cbd5e1; padding-top: 0.5rem;">
+                                        <div style="font-weight: bold; color: #0f766e; margin-bottom: 0.3rem; font-size: 0.78rem;">🩺 GT Physician Consensus:</div>
+                                        <div style="display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.72rem; color: #475569;">
+                                            <div style="display: flex; justify-content: space-between;">
+                                                <span>Physicians VOTE:</span>
+                                                <strong id="ref-physician-class">--</strong>
+                                            </div>
+                                            <div style="display: flex; justify-content: space-between;">
+                                                <span>Severity Degree:</span>
+                                                <strong id="ref-physician-degree">--</strong>
+                                            </div>
+                                            <div style="display: flex; justify-content: space-between;">
+                                                <span>GT Reduction:</span>
+                                                <strong id="ref-physician-reduction">--%</strong>
+                                            </div>
+                                            <div style="margin-top: 0.2rem; padding: 0.4rem; background: #e2e8f0; border-radius: 4px; font-size: 0.7rem; white-space: pre-line;" id="ref-physician-reasoning"></div>
+                                        </div>
                                     </div>
                                     <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.2rem;">
                                         <span style="color: #475569; font-weight: 600;">Candidate Cycles Evaluated:</span>
