@@ -535,10 +535,12 @@ function startProcessing() {
             }
         }, 1000);
 
+        console.log("[FRONTEND LOG] Upload started. Waiting for backend response...");
         fetch(uploadUrl, { method: 'POST', body: formData })
         .then(async response => {
+            console.log("[FRONTEND LOG] Response received from backend. Status: ", response.status);
             clearInterval(timeoutChecker); // Clear checker if response arrived
-            console.log("[FRONTEND FETCH] Response status received: ", response.status, response.statusText);
+            
             if (!response.ok) {
                 let errorMsg = `Server returned status ${response.status}: ${response.statusText}`;
                 try {
@@ -556,12 +558,13 @@ function startProcessing() {
             return response.json();
         })
         .then(data => {
-            console.log("[FRONTEND FETCH] Processing successful. Response data received.");
+            console.log("[FRONTEND LOG] JSON parsed successfully from response.");
             if(data.error) {
                 alert("เกิดข้อผิดพลาดจากระบบประมวลผล: " + data.error);
                 resetApp();
             } else {
                 backendResultData = data;
+                console.log("[FRONTEND LOG] Result data stored in backendResultData.");
             }
         })
         .catch(error => {
@@ -572,7 +575,7 @@ function startProcessing() {
             if (detail.includes("Failed to fetch") || detail.includes("NetworkError") || detail.includes("status 504") || detail.includes("status 502")) {
                 userFriendlyMsg += `1. เครื่องประมวลผลปลายทาง (Render Free tier) อาจกำลังหลับหรือค้างเนื่องจากหมดเวลาจำกัดของเซิร์ฟเวอร์ (Server Timeout/Restart)\n2. กรุณาทดลองส่งอัปโหลดไฟล์วิดีโอที่มีขนาดสั้นลง หรือขนาดความละเอียดภาพน้อยลง\n3. ตรวจสอบสถานะการเชื่อมต่ออินเทอร์เน็ตของคุณอีกครั้ง`;
             } else {
-                userFriendlyMsg += `1. หากไฟล์มีขนาดใหญ่เกินพิกัด ระบบอาจปฏิเสธการอัปโหลด\n2. กรุณาลองอัปโหลดไฟล์วิดีโอที่มีขนาดความละเอียดน้อยลง หรือมีคาบช่วงเวลาที่สั้นลง`;
+                userFriendlyMsg += `1. หากไฟล์มีขนาดใหญ่เกินพิกัด ระบบอาจปฏิเสธการอัปโหลด\n2. กรุณาลองอัปโหลดไฟล์วิดีโอที่มีขนาดความละเอียดน้อยลง หรือมีคาบช่วงเวลาที่สั้นลง\n3. รายละเอียดข้อผิดพลาดทางเทคนิค: ${detail}`;
             }
             alert(userFriendlyMsg);
             resetApp();
@@ -611,10 +614,12 @@ function checkIfAiIsDone() {
 let animationInterval = null;
 
 function showResults() {
-    processingSection.classList.remove('active');
-    
-    // Clear old looping animation
-    if(animationInterval) clearInterval(animationInterval);
+    console.log("[FRONTEND LOG] Rendering results started...");
+    try {
+        processingSection.classList.remove('active');
+        
+        // Clear old looping animation
+        if(animationInterval) clearInterval(animationInterval);
     
     // Load and build 3D geometry
     contourSlicesData = backendResultData.contour_slices || [];
@@ -858,6 +863,13 @@ function showResults() {
             onWindowResize(); // Force WebGL viewport adjustment once visible
         }, 50);
     }, 500);
+
+    console.log("[FRONTEND LOG] Rendering completed successfully.");
+    } catch (renderError) {
+        console.error("[FRONTEND LOG] Exception occurred during rendering: ", renderError);
+        alert("ข้อผิดพลาดฝั่งไคลเอนต์ขณะแสดงผลข้อมูลเรขาคณิต (Rendering Error):\n\n" + (renderError.stack || renderError.message || renderError));
+        resetApp();
+    }
 }
 
 function resetApp() {
